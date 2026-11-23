@@ -1,0 +1,9 @@
+when	version	label	pr	check	lines	score	correct	incomplete	unanswered	wrong	findings	findings on page
+2026-11-23T14:15:03.306Z	c3d5654b	baseline, cli-15081 only	cli-15081	ok	55/56	6.4	4	1	2	0	3	2
+2026-11-23T14:31:24.900Z	c3d5654b	baseline	example	ok	36/38	8.5	3	1	0	0	4	1
+2026-11-23T14:31:24.932Z	c3d5654b	baseline	cli-15083	ok	78/93	8	8	0	2	0	4	2
+2026-11-23T14:31:24.951Z	c3d5654b	baseline	sandbox-1	ok	12/12	10	2	0	0	0	3	1
+2026-11-23T15:12:15.776Z	386a0c88	open AI threads that point out a problem go on the page	example	ok	35/38	8.5	3	1	0	0	4	2
+2026-11-23T15:12:15.815Z	386a0c88	open AI threads that point out a problem go on the page	cli-15081	ok	51/56	8.9	6	0	1	0	3	2
+2026-11-23T15:12:15.843Z	386a0c88	open AI threads that point out a problem go on the page	cli-15083	ok	71/93	10	10	0	0	0	4	2
+2026-11-23T15:12:15.853Z	386a0c88	open AI threads that point out a problem go on the page	sandbox-1	ok	11/12	10	2	0	0	0	3	2

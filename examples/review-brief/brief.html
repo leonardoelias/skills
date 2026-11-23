@@ -1,0 +1,1815 @@
+<title>Reuse the shipping quote for 10 minutes in checkout</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style id="brief-base">
+/* Layout: a fixed index on the left and one reading column. Text stops at 72ch; diffs and charts use the full column. */
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --ink: #161a21;
+  --muted: #576072;
+  --faint: #8790a0;
+  --rule: #dce1e8;
+  --accent: #2352c8;
+  --accent-soft: #e6ecfb;
+  --add: #17774b;
+  --add-bg: #e5f4ec;
+  --add-mark: #bde5cd;
+  --del: #b2252e;
+  --del-bg: #fbe9ea;
+  --del-mark: #f3c3c6;
+  --mod: #a35800;
+  --code-bg: #eaedf2;
+  --tip-bg: #161a21;
+  --tip-ink: #f4f6f8;
+  --syn-keyword: #8a2fb0;
+  --syn-string: #8f4a00;
+  --syn-number: #0b57a8;
+  --syn-title: #5636c0;
+  --syn-type: #0c6b73;
+  --syn-comment: #687181;
+  --font-text: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-code: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-chart: Helvetica, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1216;
+    --surface: #161a20;
+    --ink: #e4e8ee;
+    --muted: #9aa3b2;
+    --faint: #6c7584;
+    --rule: #272e38;
+    --accent: #8daeff;
+    --accent-soft: #1b2640;
+    --add: #6dd39b;
+    --add-bg: #10291c;
+    --add-mark: #1e4b33;
+    --del: #f29aa0;
+    --del-bg: #32161a;
+    --del-mark: #5c242a;
+    --mod: #f0b062;
+    --code-bg: #20262f;
+    --tip-bg: #e4e8ee;
+    --tip-ink: #0f1216;
+    --syn-keyword: #d8a6ff;
+    --syn-string: #f1b77b;
+    --syn-number: #8fc0ff;
+    --syn-title: #b9a6ff;
+    --syn-type: #6fd3d5;
+    --syn-comment: #808a99;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1216;
+  --surface: #161a20;
+  --ink: #e4e8ee;
+  --muted: #9aa3b2;
+  --faint: #6c7584;
+  --rule: #272e38;
+  --accent: #8daeff;
+  --accent-soft: #1b2640;
+  --add: #6dd39b;
+  --add-bg: #10291c;
+  --add-mark: #1e4b33;
+  --del: #f29aa0;
+  --del-bg: #32161a;
+  --del-mark: #5c242a;
+  --mod: #f0b062;
+  --code-bg: #20262f;
+  --tip-bg: #e4e8ee;
+  --tip-ink: #0f1216;
+  --syn-keyword: #d8a6ff;
+  --syn-string: #f1b77b;
+  --syn-number: #8fc0ff;
+  --syn-title: #b9a6ff;
+  --syn-type: #6fd3d5;
+  --syn-comment: #808a99;
+  color-scheme: dark;
+}
+
+/* Sizes: text 16px; code 13px; tables and comments 14px; index and labels 12px; h2 22px; h1 26–36px. */
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 16px/1.6 var(--font-text);
+  -webkit-font-smoothing: antialiased;
+}
+.page {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  gap: 48px;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding-block: 40px 120px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { min-width: 0; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+code {
+  font-family: var(--font-code);
+  font-size: 0.85em;
+  background: var(--code-bg);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+
+/* Index */
+.side {
+  position: sticky;
+  top: calc(env(safe-area-inset-top, 0px) + 32px);
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  font-size: 12px;
+}
+.index {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--rule);
+}
+.index a {
+  display: block;
+  margin-left: -1px;
+  padding: 4px 0 4px 12px;
+  border-left: 2px solid transparent;
+  color: var(--muted);
+  line-height: 1.4;
+  text-decoration: none;
+}
+.index a:hover { color: var(--ink); }
+.index a[aria-current="true"] { color: var(--accent); border-left-color: var(--accent); font-weight: 500; }
+.layout-control {
+  display: inline-flex;
+  width: max-content;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.layout-control button {
+  font: inherit;
+  padding: 4px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.layout-control button + button { border-left: 1px solid var(--rule); }
+.layout-control button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.preview-link { font-weight: 500; text-decoration: none; }
+
+/* Header */
+.head { display: flow-root; margin-bottom: 8px; }
+.pr-link {
+  float: right;
+  margin: 8px 0 12px 24px;
+  padding: 2px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font: 500 12px/1.6 var(--font-code);
+  text-decoration: none;
+  white-space: nowrap;
+}
+h1 {
+  margin: 0 0 10px;
+  font-size: clamp(26px, 1.6vw + 16px, 36px);
+  line-height: 1.18;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 0 0 28px;
+  font: 500 12px/1.5 var(--font-code);
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.stats .add { color: var(--add); }
+.stats .del { color: var(--del); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: -12px 0 24px; }
+.chip {
+  padding: 1px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 500;
+}
+.chip code { background: none; padding: 0; color: inherit; }
+
+/* Text: stops at the reading width; diffs, charts and tables use the full column. */
+:is(.story, .note, .callout, .discarded, .decision, .assumption, .tests, section > p, section > ul, section > ol) {
+  max-width: 72ch;
+}
+.story { display: flex; flex-direction: column; gap: 6px; margin: 0 0 20px; }
+.lede { margin: 0; font-size: 18px; line-height: 1.55; }
+.lede b { font-weight: 600; margin-right: 0.3em; }
+.note { margin: 0 0 14px; }
+section > p { margin: 0 0 14px; }
+.label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.callout {
+  margin: 16px 0;
+  padding: 12px 16px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.callout p, .discarded p, .assumption p { margin: 0; }
+.callout p + p, .discarded p + p, .assumption p + p { margin-top: 8px; }
+.discarded {
+  margin: 16px 0;
+  padding: 2px 0 2px 16px;
+  border-left: 2px dashed var(--rule);
+  color: var(--muted);
+}
+.discarded .label { color: var(--faint); }
+details.decision {
+  margin: 12px 0;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface);
+}
+details.decision > summary {
+  display: block;
+  padding: 10px 16px;
+  cursor: pointer;
+  list-style: none;
+}
+details.decision > summary::-webkit-details-marker { display: none; }
+.decision-head { display: flex; align-items: flex-start; gap: 10px; }
+.decision-title { flex: 1; min-width: 0; font-weight: 500; }
+.implicit {
+  flex: none;
+  margin-top: 2px;
+  padding: 0 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 20px;
+  color: var(--mod);
+}
+.discussion { flex: none; display: inline-flex; margin-top: 4px; color: var(--faint); }
+.discussion:hover { color: var(--accent); }
+.discussion svg { width: 16px; height: 16px; }
+.decision-head::after {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin: 8px 4px 0 2px;
+  border-right: 1.5px solid var(--faint);
+  border-bottom: 1.5px solid var(--faint);
+  transform: rotate(-45deg);
+}
+details.decision[open] .decision-head::after { transform: rotate(45deg); margin-top: 5px; }
+.decision-body { padding: 0 16px 14px; }
+.decision-body > p { margin: 0 0 10px; }
+.decision-body > :last-child { margin-bottom: 0; }
+.why { color: var(--muted); }
+.assumption {
+  margin: 12px 0;
+  padding: 10px 16px;
+  border: 1px dashed var(--faint);
+  border-radius: 8px;
+}
+
+/* Sections */
+section { margin-top: 64px; scroll-margin-top: 24px; }
+h2 {
+  margin: 0 0 16px;
+  font-size: 22px;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+h3 { margin: 32px 0 10px; font-size: 16px; font-weight: 600; }
+.table-wrap { overflow-x: auto; margin: 16px 0; }
+main table { border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+main th {
+  padding: 6px 16px 6px 0;
+  border-bottom: 1px solid var(--rule);
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+main td { padding: 6px 16px 6px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+
+/* Diffs and examples */
+figure.diff, figure.example {
+  min-width: 0;
+  margin: 20px 0;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--surface);
+  overflow: hidden;
+}
+figure.diff > script, figure.example > script, figure.diff > .thread { display: none; }
+.diff-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--rule);
+  font: 500 12px/1.5 var(--font-code);
+  color: var(--muted);
+}
+.diff-head .path { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.diff-head .kind { color: var(--faint); font-weight: 400; }
+.diff-head .open { text-decoration: none; }
+.code { padding: 8px 0; font: 400 13px/1.6 var(--font-code); tab-size: 2; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr); }
+.code.split .row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.code.split .row > .cell + .cell { border-left: 1px solid var(--rule); }
+.cell {
+  position: relative;
+  min-width: 0;
+  min-height: 1.6em;
+  padding: 0 14px 0 30px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.cell::before {
+  content: attr(data-sign);
+  position: absolute;
+  left: 12px;
+  color: var(--faint);
+  user-select: none;
+}
+.cell.del { background: var(--del-bg); }
+.cell.del::before { color: var(--del); }
+.cell.add { background: var(--add-bg); }
+.cell.add::before { color: var(--add); }
+.cell.none { background: color-mix(in srgb, var(--bg) 70%, var(--surface)); }
+.cell mark { color: inherit; border-radius: 2px; }
+.cell.del mark { background: var(--del-mark); }
+.cell.add mark { background: var(--add-mark); }
+.hidden-row {
+  display: block;
+  width: 100%;
+  margin: 2px 0;
+  padding: 2px 14px 2px 30px;
+  border: 0;
+  background: color-mix(in srgb, var(--accent-soft) 70%, transparent);
+  color: var(--accent);
+  font: inherit;
+  text-align: left;
+  white-space: pre;
+  cursor: pointer;
+}
+.hidden-row:hover { background: var(--accent-soft); }
+.page-note { color: color-mix(in srgb, var(--accent) 75%, var(--muted)); font-style: italic; cursor: help; }
+.example .code { padding: 12px 0; }
+.example .cell { padding-left: 16px; }
+.example .cell::before { content: none; }
+.hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-doctag, .hljs-meta .hljs-keyword { color: var(--syn-keyword); }
+.hljs-string, .hljs-regexp, .hljs-template-tag, .hljs-addition { color: var(--syn-string); }
+.hljs-number, .hljs-attr, .hljs-attribute, .hljs-variable.constant_, .hljs-symbol, .hljs-link { color: var(--syn-number); }
+.hljs-title, .hljs-title.function_, .hljs-section, .hljs-name { color: var(--syn-title); }
+.hljs-type, .hljs-built_in, .hljs-title.class_, .hljs-selector-class, .hljs-tag { color: var(--syn-type); }
+.hljs-comment, .hljs-quote, .hljs-meta { color: var(--syn-comment); font-style: italic; }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: 600; }
+
+/* Review threads */
+.thread-row { padding: 10px 14px 12px 30px; background: color-mix(in srgb, var(--bg) 60%, var(--surface)); border-block: 1px solid var(--rule); }
+.code.split .thread-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 44px; }
+.code.split .thread-row.on-new > .thread-card { grid-column: 2; }
+.thread-card { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.comment { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 2px 10px; font: 400 14px/1.55 var(--font-text); white-space: normal; }
+.comment .avatar {
+  grid-row: span 2;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--code-bg);
+  object-fit: cover;
+}
+.comment .author { font-size: 12px; font-weight: 600; text-decoration: none; color: var(--ink); }
+.comment .author:hover { color: var(--accent); }
+.comment .body { min-width: 0; overflow-wrap: anywhere; }
+.comment .body > :first-child { margin-top: 0; }
+.comment .body > :last-child { margin-bottom: 0; }
+.comment .body :is(p, ul, ol, blockquote, pre) { margin: 0 0 8px; }
+.comment .body :is(h1, h2, h3, h4, h5, h6) { margin: 0 0 8px; font-size: 14px; }
+.comment .body blockquote { padding-left: 10px; border-left: 2px solid var(--rule); color: var(--muted); }
+.comment .body pre { padding: 8px 10px; border-radius: 6px; background: var(--code-bg); overflow-x: auto; font: 12px/1.5 var(--font-code); }
+.comment .body pre code { padding: 0; background: none; font-size: inherit; }
+.comment .body.plain { white-space: pre-wrap; }
+
+/* Charts (Graphviz) */
+.chart { margin: 24px 0; overflow-x: auto; text-align: center; }
+.chart svg { max-width: 100%; height: auto; }
+.chart svg text { font-family: var(--font-chart); fill: var(--ink); }
+.chart .node :is(path, polygon, ellipse) { fill: var(--surface); stroke: var(--ink); }
+.chart .edge path { stroke: var(--muted); }
+.chart .edge polygon { fill: var(--muted); stroke: var(--muted); }
+.chart .edge text { fill: var(--muted); }
+.chart .node.muted :is(path, polygon, ellipse) { stroke: var(--faint); stroke-width: 0.8; }
+.chart .node.muted text { fill: var(--muted); }
+.chart .edge.muted path { stroke: var(--faint); stroke-width: 0.8; }
+.chart .edge.muted polygon { fill: var(--faint); stroke: var(--faint); }
+.chart .edge.muted text { fill: var(--faint); }
+.chart .node.added :is(path, polygon, ellipse) { fill: var(--add-bg); stroke: var(--add); stroke-width: 2; }
+.chart .edge.added path { stroke: var(--add); stroke-width: 2; }
+.chart .edge.added polygon { fill: var(--add); stroke: var(--add); }
+.chart .added text { fill: var(--add); }
+.chart .node.removed :is(path, polygon, ellipse) { fill: var(--del-bg); stroke: var(--del); stroke-dasharray: 4 3; }
+.chart .edge.removed path { stroke: var(--del); stroke-dasharray: 4 3; }
+.chart .edge.removed polygon { fill: var(--del); stroke: var(--del); }
+.chart .removed text { fill: var(--del); text-decoration: line-through; }
+.chart a:hover .node :is(path, polygon) { stroke: var(--accent); }
+.chart a:hover .node text { fill: var(--accent); }
+.chart-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 24px; align-items: start; margin: 24px 0; }
+.chart-pair .chart { margin: 8px 0 0; }
+.chart-error { text-align: left; font: 12px/1.5 var(--font-code); color: var(--del); white-space: pre-wrap; }
+
+/* Tests */
+.tests { margin: 16px 0; }
+.tests > [data-path] + [data-path] { margin-top: 20px; }
+.test-file { display: block; margin: 0 0 6px; font: 500 12px/1.5 var(--font-code); color: var(--muted); text-decoration: none; overflow-wrap: anywhere; }
+.test-file:hover { color: var(--accent); }
+.tests ul { list-style: none; margin: 0; padding: 0; }
+.tests li { margin: 2px 0; }
+.tests [data-change] { position: relative; color: var(--muted); }
+.tests li[data-change] { padding-left: 22px; }
+.tests [data-change]:hover { color: var(--ink); }
+.tests [data-change] > a { color: inherit; text-decoration: none; }
+.tests [data-change] > a:hover { text-decoration: underline; }
+.tests li[data-change]::before { position: absolute; left: 2px; font: 600 14px/1.6 var(--font-code); }
+.tests td[data-change]::before { margin-right: 8px; font: 600 14px/1 var(--font-code); }
+.tests [data-change="added"]::before { content: "+"; color: var(--add); }
+.tests [data-change="modified"]::before { content: "~"; color: var(--mod); }
+.tests [data-change="removed"]::before { content: "−"; color: var(--del); }
+.tests .describe > .describe-name { display: block; color: var(--ink); font-weight: 500; }
+.tests .describe > ul { margin-left: 4px; padding-left: 14px; border-left: 1px solid var(--rule); }
+.tests .cases > ul { margin: 4px 0 4px 6px; padding: 2px 0; border-left: 2px solid var(--faint); border-radius: 2px; }
+.tests .cases li { margin: 0; }
+.tests .cases li[data-change] { padding-left: 24px; }
+.tests .cases li[data-change]::before { left: 8px; }
+
+/* Terms */
+.term, .term-ref { font-style: normal; text-decoration: underline dotted var(--faint); text-underline-offset: 3px; cursor: help; }
+.term-tip {
+  position: fixed;
+  z-index: 30;
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--tip-bg);
+  color: var(--tip-ink);
+  font-size: 14px;
+  line-height: 1.45;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.18);
+  pointer-events: none;
+}
+.term-tip .tip-term { display: block; margin-bottom: 2px; font-size: 12px; font-weight: 600; opacity: 0.72; }
+.term-tip code { background: color-mix(in srgb, var(--tip-ink) 16%, transparent); color: inherit; }
+
+/* Phones and narrow windows: the index becomes a row above the content and the diffs become unified. */
+@media (max-width: 859px) {
+  .page { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-block: 24px 80px; }
+  .side { position: static; max-height: none; overflow: visible; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+  .index { flex-direction: row; gap: 16px; width: 100%; overflow-x: auto; border-left: 0; border-bottom: 1px solid var(--rule); }
+  .index a { margin: 0 0 -1px; padding: 6px 0; border-left: 0; border-bottom: 2px solid transparent; white-space: nowrap; }
+  .index a[aria-current="true"] { border-bottom-color: var(--accent); }
+  .layout-control { display: none; }
+  .pr-link { float: none; display: inline-block; margin: 0 0 12px; }
+  .lede { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { scroll-behavior: auto !important; }
+}
+</style>
+
+<div class="page">
+<nav class="side">
+  <ol class="index">
+    <li><a href="#flow">Flow</a></li>
+    <li><a href="#checkout">Checkout</a></li>
+    <li><a href="#contract">Contract</a></li>
+    <li><a href="#quote">Quote</a></li>
+    <li><a href="#cache">Cache</a></li>
+    <li><a href="#tests">Tests</a></li>
+  </ol>
+  <div class="layout-control" role="group" hidden>
+    <button type="button" data-layout="split" aria-pressed="true"></button>
+    <button type="button" data-layout="unified" aria-pressed="false"></button>
+  </div>
+  <a class="preview-link" href="https://shop-git-shipping-cache-acme.vercel.app" target="_blank" rel="noopener">Preview ↗</a>
+</nav>
+<main data-repo="https://github.com/acme/shop" data-pr="482" data-head-sha="1aaf327317787de90ed2eb7bcae8a4604d99ef11" lang="en">
+  <header class="head">
+    <a class="pr-link" href="https://github.com/acme/shop/pull/482" target="_blank" rel="noopener">shop#482 ↗</a>
+    <h1>Reuse the shipping quote for 10 minutes in checkout</h1>
+    <p class="stats" data-pr-additions="184" data-pr-deletions="7"></p>
+    <div class="story">
+      <p class="lede"><b>Before</b> every shipping quote in checkout called the carrier, which takes about 800 ms.</p>
+      <p class="lede"><b>Now</b> checkout reuses for 10 minutes the quote for the same postal code prefix and the same <dfn class="term" data-tip="A range of 500 g. The carrier charges the same price for any weight in it.">weight band</dfn>.</p>
+    </div>
+    <p class="note">The carrier accepts 20 quotes per second, and checkout went over that on Black Friday (<a href="https://github.com/acme/shop/issues/471" target="_blank" rel="noopener">shop#471</a>).</p>
+    <p class="note">A later PR will clear the cache when the carrier changes its price table.</p>
+    <details class="decision">
+      <summary>
+        <span class="label">Decision</span>
+        <span class="decision-head">
+          <span class="decision-title">Each instance keeps the cache in its own memory, not in Redis</span>
+          <a class="discussion" href="https://acme.slack.com/archives/C04SHIP/p1732200000123456" title="Discussion on Slack"></a>
+        </span>
+      </summary>
+      <div class="decision-body">
+        <p class="why">Each instance already gets requests from the whole country, so a cache shared between the instances would get few more hits.</p>
+        <p class="cost"><span class="label">Trade-off</span>Each new instance starts with an empty cache.</p>
+        <aside class="discarded"><span class="label">Discarded idea</span><p>A Redis shared between the instances. It puts one more service in the path of each checkout.</p></aside>
+      </div>
+    </details>
+  </header>
+  <section id="flow">
+    <h2>Flow</h2>
+    <div class="chart-pair">
+      <div>
+        <p class="lede"><b>Before</b></p>
+        <div class="chart" data-links='{"CHECKOUT": "src/checkout/summary.ts#L5-L12", "QUOTE": "src/shipping/quote.ts#L9-L22"}'><script type="text/plain" class="dot">digraph {
+  CHECKOUT [label="Checkout summary"]
+  QUOTE [label="Shipping quote"]
+  CARRIER [label="Carrier API"]
+  CHECKOUT -> QUOTE [label="postal code, items"]
+  QUOTE -> CARRIER [label="postal code, weight" class="removed"]
+}</script></div>
+      </div>
+      <div>
+        <p class="lede"><b>Now</b></p>
+        <div class="chart" data-links='{"CHECKOUT": "src/checkout/summary.ts#L5-L12", "QUOTE": "src/shipping/quote.ts#L12-L31", "CACHE": "src/shipping/cache.ts#L6-L42"}'><script type="text/plain" class="dot">digraph {
+  CHECKOUT [label="Checkout summary"]
+  QUOTE [label="Shipping quote"]
+  CACHE [label="In-memory cache\n(10 min, up to 5,000 quotes)" class="added"]
+  CARRIER [label="Carrier API"]
+  CHECKOUT -> QUOTE [label="postal code, items"]
+  QUOTE -> CACHE [label="reads and writes" class="added"]
+  QUOTE -> CARRIER [label="postal code, weight,\nif not in the cache" class="added"]
+}</script></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="checkout">
+    <h2>Checkout</h2>
+    <p>A quote from the cache can be up to 10 minutes old, so the checkout summary shows it as an estimate.</p>
+    <figure class="diff" data-path="src/checkout/summary.ts" data-line="8" data-lang="ts">
+<script type="text/plain" class="old">
+export async function shippingLine(postalCode: string, items: Item[]) {
+  const quote = await quoteShipping(postalCode, items)
+  return {
+    label: 'Shipping',
+    // ...
+  }
+}
+</script>
+<script type="text/plain" class="new">
+export async function shippingLine(postalCode: string, items: Item[]) {
+  const quote = await quoteShipping(postalCode, items)
+  return {
+    label: quote.source === 'cache' ? 'Shipping (estimate)' : 'Shipping',
+    // ...
+  }
+}
+</script>
+    </figure>
+    <figure class="example" data-lang="ts">
+<script type="text/plain">
+// The first quote for a prefix and a band goes to the carrier
+await quoteShipping('01310-100', [{ weightInGrams: 300, quantity: 1 }])
+// → { priceInCents: 1000, deliveryDays: 3, source: 'carrier' }
+
+// Another postal code with the same prefix, in the same band, reuses the quote
+await quoteShipping('01310-999', [{ weightInGrams: 450, quantity: 1 }])
+// → { priceInCents: 1000, deliveryDays: 3, source: 'cache' }
+</script>
+    </figure>
+  </section>
+
+  <section id="contract">
+    <h2>Contract</h2>
+    <figure class="diff" data-path="src/shipping/quote.ts" data-line="8" data-lang="ts">
+<script type="text/plain" class="old">
+export type Quote = {
+  priceInCents: number
+  deliveryDays: number
+}
+</script>
+<script type="text/plain" class="new">
+export type Quote = {
+  priceInCents: number
+  deliveryDays: number
+  // "cache" when the price came from a quote made less than 10 minutes ago.
+  source: 'cache' | 'carrier'
+}
+</script>
+    </figure>
+  </section>
+
+  <section id="quote">
+    <h2>Shipping quote</h2>
+    <figure class="diff" data-path="src/shipping/quote.ts" data-line="19" data-lang="ts">
+<script type="text/plain" class="old">
+export async function quoteShipping(postalCode: string, items: Item[]): Promise<Quote> {
+  //{
+  const digits = postalCode.replace(/\D/g, '')
+  if (digits.length !== 8) {
+    throw new Error(`Invalid postal code: "${postalCode}"`)
+  }
+  //}
+
+  const weightInGrams = items.reduce(/* ... */)
+  const response = await quoteFromCarrier({ postalCode: digits, weightInGrams })
+
+  return {
+    priceInCents: Math.round(response.price * 100),
+    deliveryDays: response.days,
+  }
+}
+</script>
+<script type="text/plain" class="new">
+export async function quoteShipping(postalCode: string, items: Item[]): Promise<Quote> {
+  //{
+  const digits = postalCode.replace(/\D/g, '')
+  if (digits.length !== 8) {
+    throw new Error(`Invalid postal code: "${postalCode}"`)
+  }
+  //}
+
+  const weightInGrams = items.reduce(/* ... */)
+  const key = shippingKey(digits, weightInGrams)
+  const cached = shippingCache.read(key)
+  if (cached) return { ...cached, source: 'cache' }
+
+  const response = await quoteFromCarrier({ postalCode: digits, weightInGrams })
+  const quote = {
+    priceInCents: Math.round(response.price * 100),
+    deliveryDays: response.days,
+  }
+  shippingCache.write(key, quote)
+
+  return { ...quote, source: 'carrier' }
+}
+</script>
+    </figure>
+  </section>
+
+  <section id="cache">
+    <h2>Quote cache</h2>
+    <details class="decision">
+      <summary>
+        <span class="label">Decision</span>
+        <span class="decision-head">
+          <span class="decision-title">The key uses only the first 5 digits of the postal code</span>
+          <span class="implicit" title="Made during the implementation, without discussion.">Implicit</span>
+        </span>
+      </summary>
+      <div class="decision-body">
+        <p class="why">In 30 days of quotes, 97% of the postal codes with the same prefix had the same shipping price.</p>
+        <p class="cost"><span class="label">Trade-off</span>In the other 3%, the customer sees for up to 10 minutes the shipping price of another postal code with that prefix. The carrier charges the right price on the label.</p>
+      </div>
+    </details>
+    <figure class="diff" data-path="src/shipping/cache.ts" data-line="6" data-lang="ts">
+<script type="text/plain" class="new">
+/** Keeps quotes for a short time. When full, it deletes the least recently used entry. */
+export class ExpiringCache<T> {
+  read(key: string): T | undefined {
+    // ...
+  }
+
+  write(key: string, value: T): void {
+    // ...
+  }
+}
+
+/** 500 g bands: the carrier charges the same price within each band. */
+export function shippingKey(postalCode: string, weightInGrams: number): string {
+  const band = Math.ceil(weightInGrams / 500)
+  return `${postalCode.slice(0, 5)}:${band}`
+}
+
+export const shippingCache = new ExpiringCache<{ priceInCents: number; deliveryDays: number }>()
+</script>
+      <div class="thread" data-side="new" data-line="15">
+        <div class="comment" data-author="marina-costa" data-href="https://github.com/acme/shop/pull/482#discussion_r1873001"><script type="text/markdown">
+Five digits cover one neighborhood in São Paulo, but in the countryside they span different towns. Have we measured the shipping difference within the same prefix?
+</script></div>
+        <div class="comment" data-author="pedro-alves" data-href="https://github.com/acme/shop/pull/482#discussion_r1873044"><script type="text/markdown">
+I measured 30 days of quotes: within the same prefix, **97%** had the same price.
+
+I put the other 3% as a trade-off in the description. If that is too much, we can use 8 digits and accept fewer cache hits.
+</script></div>
+      </div>
+    </figure>
+  </section>
+
+  <section id="tests">
+    <h2>Tests</h2>
+    <div class="tests">
+      <div data-path="src/shipping/quote.test.ts">
+        <ul>
+          <li class="describe"><span class="describe-name">Quote shipping</span>
+            <ul>
+              <li data-line="22" data-change="added">reuses the quote for the same postal code prefix and weight band</li>
+              <li data-line="31" data-change="added">quotes the carrier again for another weight band</li>
+              <li data-line="16" data-change="removed">calls the carrier for every quote</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <div data-path="src/shipping/cache.test.ts">
+        <ul>
+          <li class="describe"><span class="describe-name">Expiring cache</span>
+            <ul>
+              <li data-line="5" data-change="added">forgets the entry after it expires</li>
+              <li data-line="13" data-change="added">deletes the least recently used entry when full</li>
+            </ul>
+          </li>
+          <li class="describe"><span class="describe-name">Shipping key</span>
+            <ul>
+              <li class="cases" title="Cases of one test">
+                <ul>
+                  <li data-line="25" data-change="added">postal code 01310100 with 500 g becomes 01310:1</li>
+                  <li data-line="25" data-change="added">postal code 01310999 with 501 g becomes 01310:2</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+</div>
+<script type="application/json" id="avatars">{"marina-costa":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCI+PHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjMmY2ZjczIi8+PHRleHQgeD0iMjQiIHk9IjMwIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLEFyaWFsIiBmb250LXNpemU9IjE4IiBmb250LXdlaWdodD0iNjAwIiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5NQzwvdGV4dD48L3N2Zz4=","pedro-alves":"data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCI+PHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjN2E0YjJhIi8+PHRleHQgeD0iMjQiIHk9IjMwIiBmb250LWZhbWlseT0iSGVsdmV0aWNhLEFyaWFsIiBmb250LXNpemU9IjE4IiBmb250LXdlaWdodD0iNjAwIiBmaWxsPSIjZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5QQTwvdGV4dD48L3N2Zz4="}</script>
+<script type="module" id="brief-app">
+// Libraries, with pinned versions. Only the CDNs that the Artifact host allows.
+const HLJS_URL = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js';
+const MARKED_URL = 'https://cdnjs.cloudflare.com/ajax/libs/marked/15.0.12/marked.min.js';
+const VIZ_URL = 'https://cdn.jsdelivr.net/npm/@viz-js/viz@3.25.0/dist/viz-global.js';
+
+// <shared> check.mjs runs this part to count the shown lines the same way as the page.
+
+// A hidden block is unchanged code between a `//{` line and a `//}` line. The page shows the block as a
+// single line until the reader clicks it.
+const HIDDEN_OPEN = /^\s*\/\/\{\s*$/;
+const HIDDEN_CLOSE = /^\s*\/\/\}\s*$/;
+const HIDDEN_KEY = '\u0000hidden\u0000';
+
+// The lines of one side of the diff, without blank lines at the start and end or spaces at the end of each line.
+function splitLines(text) {
+  const lines = String(text ?? '').replace(/\r\n?/g, '\n').split('\n').map((line) => line.replace(/\s+$/, ''));
+  while (lines.length > 0 && lines[0] === '') lines.shift();
+  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
+  return lines;
+}
+
+// Reads one side: `shown` are the lines as the page first shows them (each hidden block becomes one line), `full`
+// are the lines with the blocks open, and `fullIndex[i]` is the line of `full` where line `i` of `shown` starts.
+function readSide(text) {
+  const shown = [];
+  const full = [];
+  const fullIndex = [];
+  let block = null;
+
+  for (const line of splitLines(text)) {
+    if (!block && HIDDEN_OPEN.test(line)) {
+      block = { indent: line.match(/^\s*/)[0], lines: [] };
+      continue;
+    }
+
+    if (block && HIDDEN_CLOSE.test(line)) {
+      fullIndex.push(full.length);
+      shown.push({ text: HIDDEN_KEY + block.lines.map((l) => l.trim()).join('\n'), hidden: block.lines, indent: block.indent });
+      full.push(...block.lines);
+      block = null;
+      continue;
+    }
+
+    if (block) {
+      block.lines.push(line);
+      continue;
+    }
+
+    fullIndex.push(full.length);
+    shown.push({ text: line });
+    full.push(line);
+  }
+
+  // A `//{` without `//}` hides nothing (check reports the error).
+  if (block) {
+    for (const line of block.lines) {
+      fullIndex.push(full.length);
+      shown.push({ text: line });
+      full.push(line);
+    }
+  }
+
+  return { shown, full, fullIndex };
+}
+
+// Line diff by LCS. Like GitHub's "Hide whitespace", spaces at the start and end do not count: a line whose
+// indentation is the only change is an unchanged line. A blank line is worth little in the LCS, so the diff does
+// not trade a line of code that is the same on both sides for a blank line. In each changed part, the removals come
+// before the additions.
+function diffRows(a, b) {
+  const weight = (line) => (line === '' ? 1 : 100);
+  const ka = a.map((line) => line.trim());
+  const kb = b.map((line) => line.trim());
+  let start = 0;
+  while (start < ka.length && start < kb.length && ka[start] === kb[start]) start++;
+
+  let endA = ka.length;
+  let endB = kb.length;
+  while (endA > start && endB > start && ka[endA - 1] === kb[endB - 1]) {
+    endA--;
+    endB--;
+  }
+
+  const n = endA - start;
+  const m = endB - start;
+  const lcs = Array.from({ length: n + 1 }, () => new Uint32Array(m + 1));
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      const skip = Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+      lcs[i][j] = ka[start + i] === kb[start + j] ? Math.max(lcs[i + 1][j + 1] + weight(ka[start + i]), skip) : skip;
+    }
+  }
+
+  const ops = [];
+  for (let k = 0; k < start; k++) ops.push({ type: 'same', a: k, b: k });
+
+  let dels = [];
+  let adds = [];
+  const flush = () => {
+    for (const i of dels) ops.push({ type: 'del', a: i });
+    for (const j of adds) ops.push({ type: 'add', b: j });
+    dels = [];
+    adds = [];
+  };
+
+  let i = 0;
+  let j = 0;
+  while (i < n || j < m) {
+    if (i < n && j < m && ka[start + i] === kb[start + j] && lcs[i][j] === lcs[i + 1][j + 1] + weight(ka[start + i])) {
+      flush();
+      ops.push({ type: 'same', a: start + i, b: start + j });
+      i++;
+      j++;
+    } else if (j >= m || (i < n && lcs[i + 1][j] >= lcs[i][j + 1])) {
+      dels.push(start + i);
+      i++;
+    } else {
+      adds.push(start + j);
+      j++;
+    }
+  }
+  flush();
+
+  for (let k = 0; k < ka.length - endA; k++) ops.push({ type: 'same', a: endA + k, b: endB + k });
+  return ops;
+}
+
+// The added and removed lines that a diff shows. Blank lines do not count, and a hidden block counts as one
+// unchanged line.
+function countShown(oldText, newText) {
+  const a = readSide(oldText).shown.map((line) => line.text);
+  const b = readSide(newText).shown.map((line) => line.text);
+  let added = 0;
+  let removed = 0;
+  for (const op of diffRows(a, b)) {
+    if (op.type === 'add' && b[op.b].trim() !== '') added++;
+    if (op.type === 'del' && a[op.a].trim() !== '') removed++;
+  }
+  return { added, removed };
+}
+// </shared>
+
+const main = document.querySelector('main');
+const REPO = (main.dataset.repo || '').replace(/\/+$/, '');
+const PR = main.dataset.pr;
+const HEAD_SHA = main.dataset.headSha;
+const OWNER = REPO.split('/').slice(-2)[0] || '';
+const LANG = /^pt/i.test(main.lang || 'en') ? 'pt' : 'en';
+
+const T = {
+  pt: {
+    index: 'Seções',
+    split: 'Lado a lado',
+    unified: 'Unificado',
+    layout: 'Layout dos diffs',
+    more: (n) => `▸ mais ${n} ${n === 1 ? 'linha' : 'linhas'}`,
+    moreTitle: 'Mostra o código oculto de todos os diffs deste arquivo',
+    pageNote: 'Comentário só desta página. Não está no código do PR.',
+    open: 'Abrir este trecho no PR',
+    newFile: 'arquivo novo',
+    deletedFile: 'arquivo removido',
+    added: 'Adicionado pelo PR',
+    modified: 'Modificado pelo PR',
+    removed: 'Removido pelo PR',
+    renamedFrom: 'Antes',
+    cases: 'Casos de um teste',
+    of: 'de',
+    stats: 'Linhas que a página mostra, de todas as linhas do PR',
+    discussion: 'Discussão',
+  },
+  en: {
+    index: 'Sections',
+    split: 'Split',
+    unified: 'Unified',
+    layout: 'Diff layout',
+    more: (n) => `▸ ${n} more ${n === 1 ? 'line' : 'lines'}`,
+    moreTitle: 'Shows the hidden code of all diffs of this file',
+    pageNote: 'A comment only on this page. It is not in the code of the PR.',
+    open: 'Open this code in the PR',
+    newFile: 'new file',
+    deletedFile: 'deleted file',
+    added: 'Added by the PR',
+    modified: 'Changed by the PR',
+    removed: 'Removed by the PR',
+    renamedFrom: 'Before',
+    cases: 'Cases of one test',
+    of: 'of',
+    stats: 'Lines that the page shows, of all lines of the PR',
+    discussion: 'Discussion',
+  },
+}[LANG];
+
+const LANGUAGES = {
+  ts: 'typescript', tsx: 'typescript', mts: 'typescript', cts: 'typescript',
+  js: 'javascript', jsx: 'javascript', mjs: 'javascript', cjs: 'javascript',
+  sh: 'bash', shell: 'bash', zsh: 'bash', md: 'markdown', py: 'python', rb: 'ruby',
+  yml: 'yaml', html: 'xml', svelte: 'xml', vue: 'xml', svg: 'xml', rs: 'rust', kt: 'kotlin',
+  cs: 'csharp', h: 'c', m: 'objectivec', jsonc: 'json', text: 'plaintext', txt: 'plaintext',
+};
+const HASH_COMMENTS = new Set(['python', 'ruby', 'bash', 'yaml', 'toml', 'ini', 'makefile', 'perl', 'r']);
+
+const escapeHtml = (text) => String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+function loadScript(url) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = url;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error(`did not load ${url}`));
+    document.head.append(script);
+  });
+}
+
+function store(key, value) {
+  try {
+    if (value === undefined) return localStorage.getItem(key);
+    localStorage.setItem(key, value);
+  } catch {
+    return null;
+  }
+}
+
+// GitHub anchors each file of the "Files changed" tab on the SHA-256 of its path. `R<n>` is a line of the head
+// and `L<n>` a line of the merge base.
+const hashes = new Map();
+async function filesLink(path, side, line) {
+  const base = `${REPO}/pull/${PR}/files`;
+  try {
+    if (!hashes.has(path)) {
+      const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(path));
+      hashes.set(path, [...new Uint8Array(bytes)].map((x) => x.toString(16).padStart(2, '0')).join(''));
+    }
+    return `${base}#diff-${hashes.get(path)}${line ? `${side}${line}` : ''}`;
+  } catch {
+    return base;
+  }
+}
+
+// Syntax highlighting of the whole side (for multi-line strings and comments), then cut into lines.
+function splitHtmlLines(html) {
+  const lines = [];
+  const open = [];
+  let current = '';
+  for (const part of html.split(/(<span[^>]*>|<\/span>|\n)/)) {
+    if (!part) continue;
+    if (part === '\n') {
+      lines.push(current + '</span>'.repeat(open.length));
+      current = open.join('');
+    } else if (part.startsWith('<span')) {
+      open.push(part);
+      current += part;
+    } else if (part === '</span>') {
+      open.pop();
+      current += part;
+    } else {
+      current += part;
+    }
+  }
+  lines.push(current + '</span>'.repeat(open.length));
+  return lines;
+}
+
+function pageNoteMatch(line, language) {
+  const match = line.match(/^(\s*)(\/\/|#)!(?!\/)\s?(.*)$/);
+  if (!match || (match[2] === '#' && !HASH_COMMENTS.has(language))) return null;
+  return match;
+}
+
+function highlightLines(lines, language) {
+  const notes = new Map();
+  const texts = lines.map((line, i) => {
+    if (line.startsWith(HIDDEN_KEY)) return '';
+    const note = pageNoteMatch(line, language);
+    if (note) {
+      notes.set(i, note);
+      return '';
+    }
+    return line;
+  });
+
+  let out = null;
+  if (window.hljs && language && hljs.getLanguage(language)) {
+    try {
+      out = splitHtmlLines(hljs.highlight(texts.join('\n'), { language, ignoreIllegals: true }).value);
+    } catch {
+      out = null;
+    }
+  }
+  if (!out || out.length !== texts.length) out = texts.map(escapeHtml);
+
+  for (const [i, [, indent, prefix, rest]] of notes) {
+    out[i] = `${indent}<span class="page-note" title="${escapeHtml(T.pageNote)}">${prefix} ${escapeHtml(rest)}</span>`;
+  }
+  return out;
+}
+
+// Word highlighting between a removed line and the added line next to it, only when the two look alike.
+function wordRanges(a, b) {
+  const tokens = (s) => s.match(/\s+|[\p{L}\p{N}_$]+|[^\s\p{L}\p{N}_$]/gu) ?? [];
+  const ta = tokens(a);
+  const tb = tokens(b);
+  if (ta.length * tb.length > 40000) return null;
+
+  const lcs = Array.from({ length: ta.length + 1 }, () => new Uint16Array(tb.length + 1));
+  for (let i = ta.length - 1; i >= 0; i--) {
+    for (let j = tb.length - 1; j >= 0; j--) {
+      lcs[i][j] = ta[i] === tb[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
+    }
+  }
+
+  const ra = [];
+  const rb = [];
+  let same = 0;
+  let i = 0;
+  let j = 0;
+  let pa = 0;
+  let pb = 0;
+  while (i < ta.length || j < tb.length) {
+    if (i < ta.length && j < tb.length && ta[i] === tb[j]) {
+      same += ta[i].trim().length;
+      pa += ta[i++].length;
+      pb += tb[j++].length;
+    } else if (j >= tb.length || (i < ta.length && lcs[i + 1][j] >= lcs[i][j + 1])) {
+      if (ta[i].trim()) ra.push([pa, pa + ta[i].length]);
+      pa += ta[i++].length;
+    } else {
+      if (tb[j].trim()) rb.push([pb, pb + tb[j].length]);
+      pb += tb[j++].length;
+    }
+  }
+
+  const visible = (s) => s.replace(/\s+/g, '').length;
+  if (same < 0.5 * Math.max(visible(a), visible(b))) return null;
+  return [ra, rb];
+}
+
+function markRanges(cell, ranges, offset) {
+  if (!ranges?.length) return;
+  const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+
+  let position = 0;
+  for (const node of nodes) {
+    const start = position;
+    const end = start + node.data.length;
+    position = end;
+    const cuts = ranges
+      .map(([from, to]) => [Math.max(from + offset, start), Math.min(to + offset, end)])
+      .filter(([from, to]) => from < to);
+
+    for (const [from, to] of cuts.reverse()) {
+      const middle = node.splitText(from - start);
+      middle.splitText(to - from);
+      const mark = document.createElement('mark');
+      middle.replaceWith(mark);
+      mark.append(middle);
+    }
+  }
+}
+
+const avatars = (() => {
+  try {
+    return JSON.parse(document.getElementById('avatars')?.textContent || '{}');
+  } catch {
+    return {};
+  }
+})();
+
+let markedReady = false;
+function renderMarkdown(target, markdown) {
+  if (!window.marked) {
+    target.classList.add('plain');
+    target.textContent = markdown;
+    return;
+  }
+
+  if (!markedReady) {
+    marked.use({
+      gfm: true,
+      breaks: true,
+      renderer: {
+        // GitHub strips almost all HTML from comments; here it shows as text.
+        html: (token) => escapeHtml(token.text ?? token.raw ?? ''),
+        // The Artifact host blocks external images.
+        image: (token) => `<a href="${escapeHtml(token.href || '')}">${escapeHtml(token.text || token.href || '')}</a>`,
+        // The page has its own heading sizes.
+        heading(token) {
+          return `<p><strong>${this.parser.parseInline(token.tokens)}</strong></p>`;
+        },
+      },
+    });
+    markedReady = true;
+  }
+
+  target.innerHTML = marked.parse(markdown);
+  for (const link of target.querySelectorAll('a')) {
+    if (!/^(https?:|mailto:)/i.test(link.getAttribute('href') || '')) link.removeAttribute('href');
+    link.target = '_blank';
+    link.rel = 'noopener';
+  }
+  linkReferences(target);
+}
+
+// As on GitHub: `#123` and `owner/repo#123` become links to the PR or issue, and `@login` to the profile.
+function linkReferences(root) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) => (node.parentElement.closest('a, code, pre') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+  });
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+
+  const pattern = /(^|[^\w/&])(?:([\w.-]+\/[\w.-]+)#(\d+)|#(\d+)|@([A-Za-z0-9](?:[A-Za-z0-9-]{0,38})))/g;
+  for (const node of nodes) {
+    if (!pattern.test(node.data)) continue;
+    pattern.lastIndex = 0;
+
+    const fragment = document.createDocumentFragment();
+    let last = 0;
+    for (const match of node.data.matchAll(pattern)) {
+      const [whole, before, otherRepo, otherNumber, number, login] = match;
+      const start = match.index + before.length;
+      fragment.append(node.data.slice(last, start));
+      const link = document.createElement('a');
+      link.target = '_blank';
+      link.rel = 'noopener';
+      if (otherRepo) link.href = `https://github.com/${otherRepo}/issues/${otherNumber}`;
+      else if (number) link.href = `${REPO}/issues/${number}`;
+      else link.href = `https://github.com/${login}`;
+      link.textContent = whole.slice(before.length);
+      fragment.append(link);
+      last = match.index + whole.length;
+    }
+    fragment.append(node.data.slice(last));
+    node.replaceWith(fragment);
+  }
+}
+
+function renderThread(thread) {
+  const card = document.createElement('div');
+  card.className = 'thread-card';
+  for (const comment of thread.querySelectorAll('.comment')) {
+    const author = comment.dataset.author || '';
+    const item = document.createElement('div');
+    item.className = 'comment';
+
+    const avatar = document.createElement(avatars[author] ? 'img' : 'span');
+    avatar.className = 'avatar';
+    if (avatars[author]) {
+      avatar.src = avatars[author];
+      avatar.alt = '';
+    }
+
+    const name = document.createElement('a');
+    name.className = 'author';
+    name.textContent = author;
+    name.href = comment.dataset.href || `https://github.com/${author}`;
+    name.target = '_blank';
+    name.rel = 'noopener';
+
+    const body = document.createElement('div');
+    body.className = 'body';
+    renderMarkdown(body, comment.querySelector('script')?.textContent.replace(/^\n/, '').replace(/\s+$/, '') ?? '');
+    item.append(avatar, name, body);
+    card.append(item);
+  }
+  return card;
+}
+
+// Diffs
+
+const expandedPaths = new Set();
+const narrow = matchMedia('(max-width: 859px)');
+let layout = store('review-brief:layout') === 'unified' ? 'unified' : 'split';
+
+function languageOf(figure) {
+  const lang = (figure.dataset.lang || '').toLowerCase();
+  return LANGUAGES[lang] ?? lang;
+}
+
+function makeCell(kind, html, sign) {
+  const cell = document.createElement('div');
+  cell.className = `cell ${kind}`;
+  cell.dataset.sign = sign;
+  cell.innerHTML = html || '';
+  return cell;
+}
+
+function hiddenButton(line, path) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'hidden-row';
+  button.title = T.moreTitle;
+  button.setAttribute('aria-expanded', 'false');
+  button.textContent = line.indent + T.more(line.hidden.length);
+  button.addEventListener('click', () => {
+    expandedPaths.add(path);
+    for (const figure of document.querySelectorAll('figure.diff')) {
+      if (figure.dataset.path === path) renderDiff(figure);
+    }
+  });
+  return button;
+}
+
+function renderDiff(figure) {
+  const path = figure.dataset.path || '';
+  const language = languageOf(figure);
+  const oldScript = figure.querySelector(':scope > script.old');
+  const newScript = figure.querySelector(':scope > script.new');
+  const oldSide = readSide(oldScript?.textContent);
+  const newSide = readSide(newScript?.textContent);
+  const expanded = expandedPaths.has(path);
+  const oneSided = !oldScript || !newScript;
+  const mode = oneSided || narrow.matches || layout === 'unified' ? 'unified' : 'split';
+
+  const a = expanded ? oldSide.full : oldSide.shown.map((line) => line.text);
+  const b = expanded ? newSide.full : newSide.shown.map((line) => line.text);
+  const shownA = expanded ? null : oldSide.shown;
+  const shownB = expanded ? null : newSide.shown;
+  const ha = highlightLines(a, language);
+  const hb = highlightLines(b, language);
+  const ops = diffRows(a, b);
+
+  // Threads: data-line counts the lines as the page first shows them.
+  const threads = new Map();
+  for (const thread of figure.querySelectorAll(':scope > .thread')) {
+    const side = thread.dataset.side === 'old' ? 'old' : 'new';
+    const shownLine = Number(thread.dataset.line) - 1;
+    const map = side === 'old' ? oldSide.fullIndex : newSide.fullIndex;
+    const index = expanded ? map[shownLine] : shownLine;
+    const key = `${side}:${index}`;
+    if (!threads.has(key)) threads.set(key, []);
+    threads.get(key).push(thread);
+  }
+
+  const body = document.createElement('div');
+  body.className = `code ${mode}`;
+
+  const threadRows = (side, index) => {
+    for (const thread of threads.get(`${side}:${index}`) ?? []) {
+      const row = document.createElement('div');
+      row.className = `thread-row on-${side}`;
+      row.append(renderThread(thread));
+      body.append(row);
+    }
+  };
+
+  const sameRow = (op) => {
+    const hidden = shownB?.[op.b]?.hidden ? shownB[op.b] : shownA?.[op.a]?.hidden ? shownA[op.a] : null;
+    if (hidden) {
+      body.append(hiddenButton(hidden, path));
+      return;
+    }
+
+    const row = document.createElement('div');
+    row.className = 'row';
+    if (mode === 'split') row.append(makeCell('same', ha[op.a], ' '), makeCell('same', hb[op.b], ' '));
+    else row.append(makeCell('same', hb[op.b], ' '));
+    body.append(row);
+    threadRows('old', op.a);
+    threadRows('new', op.b);
+  };
+
+  const changeRows = (dels, adds) => {
+    const pairs = [];
+    for (let k = 0; k < Math.min(dels.length, adds.length); k++) {
+      const left = a[dels[k]];
+      const right = b[adds[k]];
+      const lead = (s) => s.match(/^\s*/)[0].length;
+      const ranges = wordRanges(left.trim(), right.trim());
+      if (ranges) pairs[k] = { ranges, offsets: [lead(left), lead(right)] };
+    }
+
+    // An added or removed blank line gets no sign: it only separates the steps of the code.
+    const delCell = (k) => {
+      const cell = makeCell('del', ha[dels[k]], a[dels[k]].trim() ? '-' : '');
+      if (pairs[k]) markRanges(cell, pairs[k].ranges[0], pairs[k].offsets[0]);
+      return cell;
+    };
+    const addCell = (k) => {
+      const cell = makeCell('add', hb[adds[k]], b[adds[k]].trim() ? '+' : '');
+      if (pairs[k]) markRanges(cell, pairs[k].ranges[1], pairs[k].offsets[1]);
+      return cell;
+    };
+
+    if (mode === 'split') {
+      for (let k = 0; k < Math.max(dels.length, adds.length); k++) {
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.append(k < dels.length ? delCell(k) : makeCell('none', '', ''), k < adds.length ? addCell(k) : makeCell('none', '', ''));
+        body.append(row);
+        if (k < dels.length) threadRows('old', dels[k]);
+        if (k < adds.length) threadRows('new', adds[k]);
+      }
+      return;
+    }
+
+    for (let k = 0; k < dels.length; k++) {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.append(delCell(k));
+      body.append(row);
+      threadRows('old', dels[k]);
+    }
+    for (let k = 0; k < adds.length; k++) {
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.append(addCell(k));
+      body.append(row);
+      threadRows('new', adds[k]);
+    }
+  };
+
+  let dels = [];
+  let adds = [];
+  for (const op of ops) {
+    if (op.type === 'del') dels.push(op.a);
+    else if (op.type === 'add') adds.push(op.b);
+    else {
+      if (dels.length || adds.length) changeRows(dels, adds);
+      dels = [];
+      adds = [];
+      sameRow(op);
+    }
+  }
+  if (dels.length || adds.length) changeRows(dels, adds);
+
+  figure.querySelector(':scope > .code')?.remove();
+  figure.append(body);
+}
+
+async function renderDiffHead(figure) {
+  const path = figure.dataset.path || '';
+  const hasOld = Boolean(figure.querySelector(':scope > script.old'));
+  const hasNew = Boolean(figure.querySelector(':scope > script.new'));
+  const head = document.createElement('div');
+  head.className = 'diff-head';
+
+  const name = document.createElement('span');
+  name.className = 'path';
+  name.textContent = figure.dataset.name || path;
+  head.append(name);
+
+  if (hasOld !== hasNew) {
+    const kind = document.createElement('span');
+    kind.className = 'kind';
+    kind.textContent = hasNew ? T.newFile : T.deletedFile;
+    head.append(kind);
+  }
+
+  const open = document.createElement('a');
+  open.className = 'open';
+  open.textContent = '↗';
+  open.title = T.open;
+  open.setAttribute('aria-label', T.open);
+  open.target = '_blank';
+  open.rel = 'noopener';
+  open.href = await filesLink(path, hasNew ? 'R' : 'L', figure.dataset.line);
+  head.append(open);
+  figure.prepend(head);
+}
+
+function renderExample(figure) {
+  const language = languageOf(figure);
+  const lines = splitLines(figure.querySelector(':scope > script')?.textContent);
+  const html = highlightLines(lines, language);
+  const body = document.createElement('div');
+  body.className = 'code';
+  for (const line of html) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.append(makeCell('same', line, ''));
+    body.append(row);
+  }
+  figure.querySelector(':scope > .code')?.remove();
+  figure.append(body);
+}
+
+function renderAllCode() {
+  for (const figure of document.querySelectorAll('figure.diff')) renderDiff(figure);
+  for (const figure of document.querySelectorAll('figure.example')) renderExample(figure);
+}
+
+function setupLayoutControl() {
+  const control = document.querySelector('.layout-control');
+  if (!control || !document.querySelector('figure.diff script.old')) return;
+  control.hidden = false;
+  control.setAttribute('aria-label', T.layout);
+  for (const button of control.querySelectorAll('button')) {
+    button.textContent = button.dataset.layout === 'split' ? T.split : T.unified;
+    button.setAttribute('aria-pressed', String(button.dataset.layout === layout));
+    button.addEventListener('click', () => {
+      layout = button.dataset.layout;
+      store('review-brief:layout', layout);
+      for (const other of control.querySelectorAll('button')) other.setAttribute('aria-pressed', String(other === button));
+      renderAllCode();
+    });
+  }
+  narrow.addEventListener('change', renderAllCode);
+}
+
+// Header, tests and decisions
+
+function renderStats() {
+  const stats = document.querySelector('.stats');
+  if (!stats) return;
+  let added = 0;
+  let removed = 0;
+  for (const figure of document.querySelectorAll('figure.diff')) {
+    const count = countShown(figure.querySelector(':scope > script.old')?.textContent, figure.querySelector(':scope > script.new')?.textContent);
+    added += count.added;
+    removed += count.removed;
+  }
+  for (const test of document.querySelectorAll('.tests [data-change]')) {
+    if (test.dataset.change === 'removed') removed++;
+    else added++;
+  }
+
+  const prAdded = Number(stats.dataset.prAdditions) || 0;
+  const prRemoved = Number(stats.dataset.prDeletions) || 0;
+  stats.title = T.stats;
+  stats.innerHTML = `<span><span class="add">+${added}</span> ${T.of} +${prAdded}</span>`
+    + `<span><span class="del">−${removed}</span> ${T.of} −${prRemoved}</span>`;
+}
+
+async function renderTests() {
+  for (const file of document.querySelectorAll('.tests > [data-path]')) {
+    const path = file.dataset.path;
+    const heading = document.createElement('a');
+    heading.className = 'test-file';
+    heading.textContent = path;
+    heading.target = '_blank';
+    heading.rel = 'noopener';
+    heading.href = await filesLink(path);
+    file.prepend(heading);
+
+    for (const item of file.querySelectorAll('[data-change]')) {
+      const change = item.dataset.change;
+      const link = document.createElement('a');
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.href = await filesLink(path, change === 'removed' ? 'L' : 'R', item.dataset.line);
+      link.append(...item.childNodes);
+      item.append(link);
+      const renamed = item.dataset.renamedFrom ? ` · ${T.renamedFrom}: ${item.dataset.renamedFrom.split(/\s+/).join(', ')}` : '';
+      item.title = (T[change] ?? '') + renamed;
+    }
+    for (const group of file.querySelectorAll('.cases')) group.title ||= T.cases;
+  }
+}
+
+const DISCUSSION_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" d="M2.5 3.5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H7l-3 2.5V11H3.5a1 1 0 0 1-1-1z"/></svg>';
+
+function setupDecisions() {
+  for (const link of document.querySelectorAll('a.discussion')) {
+    if (!link.querySelector('svg')) link.innerHTML = DISCUSSION_ICON;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    if (!link.getAttribute('aria-label')) link.setAttribute('aria-label', link.title || T.discussion);
+    link.addEventListener('click', (event) => event.stopPropagation());
+  }
+}
+
+// Charts
+
+const CHART_DEFAULTS = [
+  'graph [bgcolor="transparent" pad="0.15" nodesep="0.45" ranksep="0.5" fontname="Helvetica"];',
+  'node [shape="box" style="rounded,filled" fillcolor="white" color="black" fontname="Helvetica" fontsize="14" margin="0.2,0.1" penwidth="1.2"];',
+  'edge [fontname="Helvetica" fontsize="12" arrowsize="0.7" penwidth="1.1" color="black" fontcolor="black"];',
+].join(' ');
+
+async function renderCharts() {
+  const charts = [...document.querySelectorAll('.chart')];
+  if (charts.length === 0) return;
+
+  let viz;
+  try {
+    await loadScript(VIZ_URL);
+    viz = await Viz.instance();
+  } catch (error) {
+    console.error(error);
+  }
+
+  for (const chart of charts) {
+    chart.querySelector(':scope > :is(svg, .chart-error)')?.remove();
+    const source = chart.querySelector('script.dot')?.textContent ?? '';
+    let links = {};
+    try {
+      links = JSON.parse(chart.dataset.links || '{}');
+    } catch {
+      links = {};
+    }
+
+    try {
+      if (!viz) throw new Error('Graphviz did not load');
+      // The look goes before everything in the graph, so it applies to every box and arrow. The real colors
+      // come from the CSS.
+      const svg = viz.renderSVGElement(source.replace('{', `{ ${CHART_DEFAULTS}`));
+
+      // Graphviz measures in points. In pixels, the chart font is the size of the page text.
+      for (const attribute of ['width', 'height']) svg.setAttribute(attribute, String(parseFloat(svg.getAttribute(attribute))));
+      svg.removeAttribute('style');
+      svg.querySelector(':scope > g > title')?.remove();
+
+      for (const group of svg.querySelectorAll('g.node, g.edge')) {
+        const title = group.querySelector(':scope > title');
+        const id = title?.textContent ?? '';
+        title?.remove();
+        if (!group.classList.contains('node') || !links[id]) continue;
+
+        const [file, lines] = links[id].split('#');
+        const anchor = document.createElementNS('http://www.w3.org/2000/svg', 'a');
+        anchor.setAttribute('href', `${REPO}/blob/${HEAD_SHA}/${file}${lines ? `#${lines}` : ''}`);
+        anchor.setAttribute('target', '_blank');
+        anchor.setAttribute('rel', 'noopener');
+        group.replaceWith(anchor);
+        anchor.append(group);
+      }
+      chart.append(svg);
+    } catch (error) {
+      console.error(`chart: ${error.message}`);
+      const pre = document.createElement('pre');
+      pre.className = 'chart-error';
+      pre.textContent = source;
+      chart.append(pre);
+    }
+  }
+}
+
+// Terms: the explanation is on the <dfn> of the first use. The other uses (also in the plural) get the same
+// underline and the same tip. Headings, links, code, diffs, charts and test names stay as they are.
+
+const tip = document.createElement('div');
+tip.className = 'term-tip';
+tip.id = 'term-tip';
+tip.setAttribute('role', 'tooltip');
+tip.hidden = true;
+
+function tipHtml(term, text) {
+  const parts = String(text).split('`');
+  const body = parts.map((part, i) => (i % 2 ? `<code>${escapeHtml(part)}</code>` : escapeHtml(part))).join('');
+  return `<span class="tip-term">${escapeHtml(term)}</span>${body}`;
+}
+
+function showTip(element, pointer) {
+  tip.innerHTML = tipHtml(element.dataset.term || element.textContent, element.dataset.tip || '');
+  tip.hidden = false;
+  const rects = [...element.getClientRects()];
+  const rect = (pointer && rects.find((r) => pointer.y >= r.top - 2 && pointer.y <= r.bottom + 2)) || rects[0] || element.getBoundingClientRect();
+  const box = tip.getBoundingClientRect();
+  const left = Math.min(Math.max(16, rect.left + rect.width / 2 - box.width / 2), innerWidth - box.width - 16);
+  const above = rect.top - box.height - 8;
+  tip.style.left = `${left}px`;
+  tip.style.top = `${above >= 8 ? above : rect.bottom + 8}px`;
+}
+
+function hideTip() {
+  tip.hidden = true;
+}
+
+function setupTerms() {
+  const definitions = [...main.querySelectorAll('dfn.term')];
+  if (definitions.length === 0) return;
+  document.body.append(tip);
+
+  const terms = definitions.map((dfn) => {
+    dfn.tabIndex = 0;
+    dfn.dataset.term = dfn.textContent.trim();
+    dfn.setAttribute('aria-describedby', 'term-tip');
+    return { term: dfn.dataset.term, tip: dfn.dataset.tip || '' };
+  }).sort((x, y) => y.term.length - x.term.length);
+
+  const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(`(?<![\\p{L}\\p{N}])(${terms.map((t) => escapeRegExp(t.term)).join('|')})(?:e?s)?(?![\\p{L}\\p{N}])`, 'giu');
+  const byTerm = new Map(terms.map((t) => [t.term.toLowerCase(), t]));
+  const SKIP = 'h1, h2, h3, h4, a, code, pre, dfn, figure, .chart, .chart-pair, .tests, .stats, .label, .pr-link, script, style, summary .label';
+
+  const walker = document.createTreeWalker(main, NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) => (node.parentElement.closest(SKIP) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+  });
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+
+  for (const node of nodes) {
+    pattern.lastIndex = 0;
+    if (!pattern.test(node.data)) continue;
+    pattern.lastIndex = 0;
+
+    const fragment = document.createDocumentFragment();
+    let last = 0;
+    for (const match of node.data.matchAll(pattern)) {
+      const term = byTerm.get(match[1].toLowerCase());
+      if (!term) continue;
+      fragment.append(node.data.slice(last, match.index));
+      const ref = document.createElement('span');
+      ref.className = 'term-ref';
+      ref.tabIndex = -1;
+      ref.dataset.term = term.term;
+      ref.dataset.tip = term.tip;
+      ref.textContent = match[0];
+      fragment.append(ref);
+      last = match.index + match[0].length;
+    }
+    fragment.append(node.data.slice(last));
+    node.replaceWith(fragment);
+  }
+
+  const termOf = (target) => target instanceof Element ? target.closest('.term, .term-ref') : null;
+  main.addEventListener('pointerover', (event) => {
+    const term = termOf(event.target);
+    if (term) showTip(term, { x: event.clientX, y: event.clientY });
+  });
+  main.addEventListener('pointerout', (event) => {
+    if (termOf(event.target) && !termOf(event.relatedTarget) && document.activeElement !== termOf(event.target)) hideTip();
+  });
+  main.addEventListener('focusin', (event) => {
+    const term = termOf(event.target);
+    if (term) showTip(term);
+  });
+  main.addEventListener('focusout', (event) => {
+    if (termOf(event.target)) hideTip();
+  });
+  main.addEventListener('click', (event) => {
+    const term = termOf(event.target);
+    if (term) term.focus();
+  });
+  addEventListener('scroll', hideTip, { passive: true });
+}
+
+// Index: marks the section at the top of the window.
+
+function setupIndex() {
+  const side = document.querySelector('.side');
+  side?.setAttribute('aria-label', T.index);
+  const links = [...document.querySelectorAll('.index a[href^="#"]')];
+  if (links.length === 0) return;
+  const sections = links.map((link) => document.getElementById(decodeURIComponent(link.getAttribute('href').slice(1))));
+
+  let scheduled = false;
+  const update = () => {
+    scheduled = false;
+    let current = -1;
+    sections.forEach((section, i) => {
+      if (section && section.getBoundingClientRect().top <= innerHeight * 0.3) current = i;
+    });
+    // The last section can be too short to reach the top. A page that fits on the screen (or the full-page
+    // screenshot) already starts at the end: without scrolling, the rule above applies.
+    if (scrollY > 0 && innerHeight + scrollY >= document.documentElement.scrollHeight - 4) current = sections.length - 1;
+    links.forEach((link, i) => link.setAttribute('aria-current', String(i === current)));
+  };
+  addEventListener('scroll', () => {
+    if (!scheduled) {
+      scheduled = true;
+      requestAnimationFrame(update);
+    }
+  }, { passive: true });
+  update();
+}
+
+// The page is published again to the same URL at each update of the PR, and the reader reloads. The page keeps
+// the block that was at the top of the window and the distance into it, and goes back there while diffs and charts
+// load. A link to a part of the page (#…) wins.
+
+const POSITION_KEY = `review-brief:position:${REPO}#${PR}`;
+const ANCHORS = 'h1, h2, h3, figure.diff, figure.example, .chart, .chart-pair, .tests, .lede, .note, .callout, .discarded, details.decision, .assumption, .table-wrap';
+
+function anchorKey(element) {
+  if (element.matches('figure.diff')) return `diff:${element.dataset.path}:${element.dataset.name || ''}`;
+  return `${element.tagName}:${element.textContent.trim().slice(0, 80)}`;
+}
+
+function setupPosition() {
+  let restoring = !location.hash;
+  const save = () => {
+    if (restoring) return;
+    const anchors = [...main.querySelectorAll(ANCHORS)];
+    const top = anchors.find((element) => element.getBoundingClientRect().bottom > 0);
+    if (!top) return;
+    const key = anchorKey(top);
+    const nth = anchors.filter((element) => anchorKey(element) === key).indexOf(top);
+    try {
+      sessionStorage.setItem(POSITION_KEY, JSON.stringify({ key, nth, offset: -top.getBoundingClientRect().top }));
+    } catch {}
+  };
+
+  let timer;
+  addEventListener('scroll', () => {
+    clearTimeout(timer);
+    timer = setTimeout(save, 150);
+  }, { passive: true });
+
+  if (!restoring) return;
+  let saved = null;
+  try {
+    saved = JSON.parse(sessionStorage.getItem(POSITION_KEY) || 'null');
+  } catch {}
+  if (!saved) {
+    restoring = false;
+    return;
+  }
+
+  const restore = () => {
+    const matches = [...main.querySelectorAll(ANCHORS)].filter((element) => anchorKey(element) === saved.key);
+    const element = matches[saved.nth] ?? matches[0];
+    if (element) scrollTo({ top: element.getBoundingClientRect().top + scrollY + saved.offset, behavior: 'instant' });
+  };
+
+  const stop = () => {
+    restoring = false;
+    observer.disconnect();
+  };
+  const observer = new ResizeObserver(() => restoring && restore());
+  observer.observe(main);
+  for (const type of ['wheel', 'touchstart', 'keydown', 'pointerdown']) addEventListener(type, stop, { once: true, passive: true });
+  setTimeout(stop, 8000);
+  restore();
+}
+
+// Start: everything there is to read shows without the libraries; highlighting, Markdown and charts come later.
+
+setupIndex();
+setupDecisions();
+setupLayoutControl();
+renderStats();
+renderAllCode();
+setupTerms();
+setupPosition();
+await Promise.all(Array.from(document.querySelectorAll('figure.diff'), renderDiffHead));
+await renderTests();
+document.documentElement.dataset.briefReady = '1';
+
+const hasComments = Boolean(document.querySelector('figure.diff > .thread'));
+await Promise.allSettled([
+  loadScript(HLJS_URL),
+  hasComments ? loadScript(MARKED_URL) : Promise.resolve(),
+]);
+renderAllCode();
+document.documentElement.dataset.briefCode = '1';
+
+await renderCharts();
+document.documentElement.dataset.briefCharts = '1';
+</script>

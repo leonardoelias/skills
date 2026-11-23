@@ -5,6 +5,7 @@ Review and UI skills for Claude Code.
 | Skill | What it does |
 |---|---|
 | [merge-gauge](#merge-gauge) | A short verdict (low, medium or high) on the risk of merging a PR, with the gaps behind each category |
+| [review-brief](#review-brief) | A page that briefs the reviewer on a PR, so they can check its direction without reading all the code |
 | [visual-diff](#visual-diff) | Before/after screenshots, a pixel diff and a UX summary in one sticky PR comment |
 
 ```bash
@@ -62,6 +63,106 @@ and the gaps:
 - The `catch` in [auth/middleware.ts#L31](…) returns an anonymous user without logging the error
 
 **To lower it:** log the error in the `catch` in auth/middleware.ts
+```
+
+## review-brief
+
+Builds a page that gives the reviewer the same confidence as reading the whole PR, by showing only its
+direction: what changes and why, the contracts between the parts, the author's decisions (with the
+cost of each), the open review threads from people, a flow chart when the PR changes how systems
+connect, and the list of tests added, changed and removed. In Claude Code, it publishes the page as an
+Artifact and keeps it up to date while the PR changes; in other agents, it opens a local HTML file.
+
+Inspired by [MeLlamoPablo/skills · summarize-pr](https://github.com/MeLlamoPablo/skills/tree/main/skills/summarize-pr),
+rewritten from scratch in plain JavaScript, with no dependencies.
+
+```bash
+./install.sh review-brief
+```
+
+Then ask: *"/review-brief 482"* or *"brief this PR for Marina to review"*.
+
+Requirements: Node.js 20.10+, git and a logged-in `gh`. `render` (charts and screenshots) uses the
+Playwright from the visual-diff skill next to it, or the one in `PW_DIR`.
+
+### CLI
+
+```bash
+alias review-brief='node ~/.claude/skills/review-brief/bin/review-brief.mjs'   # after ./install.sh
+review-brief gather 482                       # PR facts in <repo>/.review-brief/482/ (outside git)
+review-brief check .review-brief/482/brief.html        # shape, line budget, avatars
+review-brief render .review-brief/482/brief.html --shots   # charts and page in Chromium
+review-brief open .review-brief/482/brief.html         # opens in the browser, without an Artifact
+review-brief watch .review-brief/482          # waits for the PR to change and says what changed (in the background)
+review-brief quiz prepare .review-brief/482   # question test: the page as text for whoever answers
+review-brief quiz score .review-brief/482     # question test: the score, the gaps and the errors
+review-brief eval prepare                     # skill evaluation: one folder per PR in the fixed set
+review-brief eval quiz <round>                # evaluation: fixed questions on the finished pages
+review-brief eval score <round> --label "what changed"   # evaluation: score per PR, compared with the previous version
+```
+
+The content (what to show and how to say it) is the agent's judgment, guided by `SKILL.md`. The shape
+is fixed: the agent copies `template.html` and fills in the `{{…}}` slots, and `check` verifies the
+rest against the PR's facts. `gather` saves every changed file at the head and at the merge base
+(`versions/`), and `check` uses those versions to catch what the page made up:
+
+- the template's style and script didn't change, and no slot is left;
+- every line of code shown exists in the file on that side, comparing tokens in order: it accepts line
+  breaks, trimmed types, `/* ... */` and rewritten comments; it rejects a name, value or call that isn't
+  there, and code on the wrong side. On three real PRs (712 lines) it found all of them, and rejected
+  all 704 with one name swapped;
+- every diff has a `data-line` on a line the PR changes (with a suggestion when it's off), no imports,
+  at most 100 columns and the same hidden blocks on both sides; a one-sided diff doesn't lie about the
+  file being new;
+- every open thread started by a person appears, on the line where it was written (with a suggestion),
+  and no resolved or outdated one does; the open ones from an AI reviewer that were left out are listed,
+  so the agent can show those that point to a problem still open;
+- every test points to the line that declares it; every test the PR removes appears (or what replaces
+  it), with names in words and the cases of parameterized tests grouped. `changed-tests.tsv` lists the
+  tests added, changed, moved and removed, and `check` warns when the page disagrees with it;
+- decisions closed with the why before the cost, terms explained once, charts without their own styles;
+- the lines shown are at most 20% of the PR's lines.
+
+`check` can't tell whether the page answers what a reviewer would ask. For that there's the **question
+test** (`references/question-test.md`), with three subagents that lack the context of whoever wrote
+the page: one reads the whole PR and writes a reviewer's questions, each with the answer and the lines
+behind it; another answers by reading only the page, as text (`quiz prepare`); the third grades, and
+`quiz score` adds it up. Only questions whose answer the PR states count toward the score. The ones the
+agent inferred from the code (a risk, a contradiction, something untested) become findings for the
+user, because the page doesn't give opinions.
+
+To change the skill itself there's the **evaluation** (`references/evaluation.md`): a fixed set of PRs
+(`eval/corpus.json`: the example, two real PRs from `cli/cli` in Go and a small UI PR), each with its
+head pinned and fixed questions. After changing `SKILL.md`, the template or a reference, fresh agents
+build the page for each PR, the question test grades it, and `eval score` compares with the previous
+version of the skill and writes to `eval/results.tsv`. A wrong answer, a failing check or a score that
+drops more than 1 point on a PR is an error.
+
+### How the page works
+
+| Piece | What it does |
+|---|---|
+| Diff | Its own viewer: an LCS that ignores indentation, side by side or unified (unified on phones), word-level highlighting, syntax with highlight.js, hidden blocks that open with a click, threads on their lines |
+| Charts | Graphviz (`@viz-js/viz`) with the theme's colors; Before/Now with boxes and arrows added and removed |
+| Tests | `+ ~ −` marks, `describe` and case groups, links to the line in "Files changed" |
+| Terms | The first use explains; later uses get the same tooltip |
+| Rereading | After a new publish, goes back to the block the reader was on |
+
+| File | What it does |
+|---|---|
+| `skills/review-brief/SKILL.md` | The process and the rules for content and shape |
+| `skills/review-brief/template.html` | The page: styles, light and dark themes, diff, charts, tests, terms |
+| `skills/review-brief/src/` | `gather`, `check`, `render`, `watch`, an HTML parser, a diff reader, file versions (`versions.mjs`), each file's tests (`tests.mjs`), line lookup by tokens (`verify.mjs`), the question test (`quiz.mjs`) and the evaluation (`eval.mjs`) |
+| `skills/review-brief/references/readable-code.md` | Where to put blank lines in the code shown |
+| `skills/review-brief/references/question-test.md` | The question test: the steps, the formats and the prompts of the three agents |
+| `skills/review-brief/references/evaluation.md` | The skill evaluation: the fixed set, the steps and the prompt for whoever builds the page |
+| `skills/review-brief/eval/` | The fixed set (`corpus.json`), each PR's fixed questions and the score history (`results.tsv`) |
+| `examples/review-brief/` | An example PR with the facts and the finished page (also the tests' fixture) |
+
+```bash
+cd skills/review-brief
+npm test            # everything (~15 s; render opens Chromium)
+npm run test:unit   # no browser
 ```
 
 ## visual-diff

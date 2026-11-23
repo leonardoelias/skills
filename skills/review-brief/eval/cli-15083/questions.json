@@ -1,0 +1,131 @@
+{
+  "headSha": "e22082cd29589d158d468c92748b2c4bcb5787b2",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "impact",
+      "origin": "pr",
+      "weight": 3,
+      "question": "Which user-facing behavior of gh does this PR change, and what makes up the rest of it?",
+      "answer": "Only `gh event listen`: how its event stream reader splits lines when a CR and its LF arrive in separate reads, and how it reads the Retry-After header. Everything else is new or tightened tests and fixes to the eval tooling.",
+      "sources": ["description", "internal/eventstream/sse.go#L137-L166", "pkg/cmd/event/listen/listen.go#L527-L542"]
+    },
+    {
+      "id": "q2",
+      "type": "why",
+      "origin": "pr",
+      "weight": 3,
+      "question": "Why could the event stream reader hold back a complete line before this PR, and what does it do now?",
+      "answer": "When a CR ended one read and its LF started the next, the LF was skipped in a step of its own, after which the reader waited for more input instead of splitting what it already had; a complete line, such as the blank line that ends an event, stayed buffered until the server sent more bytes. Now the LF is skipped together with the following line, so the event is returned at once.",
+      "sources": ["description", "internal/eventstream/sse.go#L137-L166", "base:internal/eventstream/sse.go#L137-L162", "internal/eventstream/sse_test.go#L182-L211"]
+    },
+    {
+      "id": "q3",
+      "type": "impact",
+      "origin": "analysis",
+      "weight": 2,
+      "question": "Does the line-splitting fix change anything for the streams the GitHub Event Subscriptions API sends today?",
+      "answer": "No. That API ends every line with a lone LF, so the case only arises on streams with CRLF line endings; the CR handling exists for compliance with the SSE specification.",
+      "sources": ["internal/eventstream/sse.go#L128-L136"]
+    },
+    {
+      "id": "q4",
+      "type": "what-changes",
+      "origin": "pr",
+      "weight": 3,
+      "question": "How does `gh event listen` interpret a Retry-After header after this PR?",
+      "answer": "Still as a number of seconds, and now also as an HTTP date, in which case it waits until that time. A date already in the past, or a value that is neither, adds no wait beyond the normal backoff.",
+      "sources": ["description", "pkg/cmd/event/listen/listen.go#L527-L542", "base:pkg/cmd/event/listen/listen.go#L526-L537", "pkg/cmd/event/listen/listen_test.go#L722-L771"]
+    },
+    {
+      "id": "q5",
+      "type": "risk",
+      "origin": "analysis",
+      "weight": 3,
+      "question": "Is the wait that a Retry-After date can impose on `gh event listen` bounded?",
+      "answer": "No. The command waits for the larger of its backoff and the requested delay, and only the backoff is capped at 30 seconds, as was already true for the seconds form. A date an hour ahead makes it wait about an hour unless `--timeout` or cancellation ends it.",
+      "sources": ["pkg/cmd/event/listen/listen.go#L44-L45", "pkg/cmd/event/listen/listen.go#L322-L330", "pkg/cmd/event/listen/listen.go#L414-L422", "pkg/cmd/event/listen/listen.go#L251-L255", "pkg/cmd/event/listen/listen_test.go#L762-L771"]
+    },
+    {
+      "id": "q6",
+      "type": "contract",
+      "origin": "analysis",
+      "weight": 2,
+      "question": "For which failed requests does `gh event listen` take Retry-After into account?",
+      "answer": "Only failures it retries: server errors (5xx) and network errors, when creating the subscription or attaching the stream. A 429 or any other 4xx response is not retried, so its Retry-After is never used.",
+      "sources": ["pkg/cmd/event/listen/listen.go#L517-L525", "pkg/cmd/event/listen/listen.go#L322-L327", "pkg/cmd/event/listen/listen.go#L414-L419"]
+    },
+    {
+      "id": "q7",
+      "type": "contract",
+      "origin": "pr",
+      "weight": 2,
+      "question": "How does the eval polling check now tell one GraphQL status read from another?",
+      "answer": "By the query text plus the values given for the variables the query declares, regardless of flag order; fields that are not query variables are ignored. Before, by the query text alone, so reads of different pull requests with the same query counted as repeated reads.",
+      "sources": ["description", "evals/src/suites/events/commands.ts#L105-L111", "base:evals/src/suites/events/commands.ts#L105-L106", "evals/src/commands.test.ts#L79-L95"]
+    },
+    {
+      "id": "q8",
+      "type": "impact",
+      "origin": "analysis",
+      "weight": 2,
+      "question": "Can the new way of telling GraphQL status reads apart make the no-polling check flag reads it did not flag before?",
+      "answer": "No. Reads that share an identity now also shared one before; the change only separates reads that used to be grouped, so it can only remove polling flags.",
+      "sources": ["evals/src/suites/events/commands.ts#L88-L111", "base:evals/src/suites/events/commands.ts#L105-L106"]
+    },
+    {
+      "id": "q9",
+      "type": "what-changes",
+      "origin": "pr",
+      "weight": 2,
+      "question": "Which graders does offline replay run on a saved raw-API trial after this PR?",
+      "answer": "Only the task grader. The route and polling graders are skipped, as the raw-API stimuli's own eval configuration does, because those trials ask for a direct API stream. Before, replay ran all three and could fail such a trial.",
+      "sources": ["description", "evals/src/replay.ts#L32-L36", "base:evals/src/replay.ts#L32-L36", "evals/src/replay.test.ts#L42-L55"]
+    },
+    {
+      "id": "q10",
+      "type": "risk",
+      "origin": "pr",
+      "weight": 2,
+      "question": "What open review concerns remain on the replay and GraphQL status-read fixes?",
+      "answer": "Raw-API trials saved in the older version-2 evidence format are read with an unknown variant, so replay still grades them on route and polling. The status-read identity compares values as typed (n=1 and n=01 differ, so repeated reads can escape the check) and drops array fields such as ids[], so reads of different pull requests can still be grouped.",
+      "sources": ["threads"]
+    },
+    {
+      "id": "q11",
+      "type": "what-changes",
+      "origin": "pr",
+      "weight": 2,
+      "question": "Which identity does a cleanup-only retry through the eval launcher (`--live --cleanup`) now use to delete fixture repositories?",
+      "answer": "The fixture token if one is set, otherwise the actor token when one is set, the same default as a full run. Before, cleanup-only skipped that default, so it could delete as a different account than the one that created the repositories.",
+      "sources": ["description", "run-evals#L84-L101", "base:run-evals#L84-L100"]
+    },
+    {
+      "id": "q12",
+      "type": "risk",
+      "origin": "pr",
+      "weight": 3,
+      "question": "Where can fixture cleanup still run as the wrong identity after this change, according to the review?",
+      "answer": "The direct `evals/cleanup` entrypoint bypasses the launcher's default and still uses the subscriber token. Trials started directly with `evals/run` or as smoke runs create fixtures as the subscriber, so defaulting their retry to the actor can be wrong too. No test covers the cleanup-only path.",
+      "sources": ["threads"]
+    },
+    {
+      "id": "q13",
+      "type": "tests",
+      "origin": "pr",
+      "weight": 3,
+      "question": "How were the changes in this PR verified?",
+      "answer": "Not tested by hand; each new test was seen to fail with the code it covers broken. The three eval fixes (cleanup retry, replay, status reads) were not run at all, because the eval dependencies were not installed.",
+      "sources": ["description"]
+    },
+    {
+      "id": "q14",
+      "type": "decision",
+      "origin": "pr",
+      "weight": 2,
+      "question": "Which review findings about gh itself does the PR leave unaddressed, and why?",
+      "answer": "Handling pending commit statuses separately, planned for its own PR with the matching skill and docs changes; checking that a run belongs to the suggested pull request, left out of scope; and propagating cancellation through subscription requests, left as is because those requests are short.",
+      "sources": ["description"]
+    }
+  ]
+}

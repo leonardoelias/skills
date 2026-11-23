@@ -1,5 +1,6 @@
 # Tests for the skills. visual-diff: unit, detection, diff, publishing with a local remote, and
-# integration with Chromium over examples/sample-site. merge-gauge: frontmatter only.
+# integration with Chromium over examples/sample-site. review-brief: unit, check over
+# examples/review-brief, gather with a fake gh, and render in Chromium. merge-gauge: frontmatter only.
 name: test
 
 on:
@@ -47,6 +48,30 @@ jobs:
           include-hidden-files: true
           retention-days: 7
           if-no-files-found: ignore
+
+  # review-brief has no dependencies, so Playwright for render goes in a separate folder.
+  review-brief:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        node: [20, 22]
+    defaults:
+      run:
+        working-directory: skills/review-brief
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Playwright for render
+        run: |
+          npm install --no-save --no-audit --no-fund --prefix "$RUNNER_TEMP/pw" playwright
+          npx --prefix "$RUNNER_TEMP/pw" playwright install --with-deps chromium
+      - name: Tests
+        env:
+          PW_DIR: ${{ runner.temp }}/pw
+        run: npm test
 
   # Every SKILL.md starts with frontmatter whose name matches its folder and has a description.
   skills:

@@ -1,0 +1,23 @@
+{
+  "number": 482,
+  "title": "Reuse the shipping quote for 10 minutes in checkout",
+  "url": "https://github.com/acme/shop/pull/482",
+  "repoUrl": "https://github.com/acme/shop",
+  "host": "github.com",
+  "owner": "acme",
+  "name": "shop",
+  "state": "OPEN",
+  "isDraft": false,
+  "author": "pedro-alves",
+  "isMine": false,
+  "hasSummaryLink": false,
+  "baseRef": "main",
+  "headRef": "shipping-cache",
+  "baseSha": "3c95c6154441dc2339383ee6c8e05cb6d04a9ec3",
+  "headSha": "1aaf327317787de90ed2eb7bcae8a4604d99ef11",
+  "mergeBase": "3c95c6154441dc2339383ee6c8e05cb6d04a9ec3",
+  "additions": 184,
+  "deletions": 7,
+  "changedFiles": 6,
+  "previewUrl": "https://shop-git-shipping-cache-acme.vercel.app"
+}

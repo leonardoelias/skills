@@ -1,0 +1,6 @@
+added	src/shipping/cache.test.ts	5	forgets the entry after it expires	ExpiringCache
+added	src/shipping/cache.test.ts	13	deletes the least recently used entry when full	ExpiringCache
+added	src/shipping/cache.test.ts	25	postal code %s with %i g becomes %s	shippingKey
+added	src/shipping/quote.test.ts	22	reuses the quote for the same postal code prefix and weight band	quoteShipping
+added	src/shipping/quote.test.ts	31	quotes the carrier again for another weight band	quoteShipping
+removed	src/shipping/quote.test.ts	16	calls the carrier for every quote	quoteShipping

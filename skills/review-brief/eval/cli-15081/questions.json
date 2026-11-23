@@ -1,0 +1,95 @@
+{
+  "headSha": "8a46b4ed8669cf886f27656ecc32210159c880cb",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "what-changes",
+      "origin": "pr",
+      "weight": 3,
+      "question": "Under what conditions do `gh run view` and `gh run watch` now print a hint, and where is it written?",
+      "answer": "Only when the caller is detected as an agent, the workflow run is not completed yet, and the run belongs to a pull request on github.com. The hint goes to stderr and suggests `gh event listen` for that pull request; human callers see no hint.",
+      "sources": ["description", "pkg/cmd/run/view/hint.go#L11-L16", "pkg/cmd/run/watch/watch.go#L150-L167", "pkg/cmd/event/shared/hint.go#L51-L55"]
+    },
+    {
+      "id": "q2",
+      "type": "why",
+      "origin": "pr",
+      "weight": 2,
+      "question": "What agent behavior is the new run hint meant to replace, and what new capability makes the replacement possible?",
+      "answer": "Agents asked to wait for a pull request's CI keep polling `gh run watch` or `gh run view`. The event subscriptions API now sends an event when a check suite on the pull request's head commit completes, carrying its conclusion, so they can wait without polling.",
+      "sources": ["description", "pkg/cmd/event/shared/help.go#L20", "pkg/cmd/event/shared/hint.go#L26-L29"]
+    },
+    {
+      "id": "q3",
+      "type": "decision",
+      "origin": "pr",
+      "weight": 3,
+      "question": "What waiting pattern does the hint tell agents to follow, and why does it not suggest `--count` or `--follow`?",
+      "answer": "Run the default one-shot listener on the pull request (not on the run), and after each event read the checks with `gh pr checks`, running the listener again while any are pending. The number of check suites per pull request is not known in advance, so a fixed count is unreliable.",
+      "sources": ["description", "pkg/cmd/event/shared/hint.go#L29-L38"]
+    },
+    {
+      "id": "q4",
+      "type": "contract",
+      "origin": "pr",
+      "weight": 2,
+      "question": "In which `gh run view` modes is the hint printed, and does it change what the command writes to stdout?",
+      "answer": "In the normal summary and with `--json` (before the JSON is written), but not with `--web` or `--log`. It goes only to stderr, so stdout and the JSON output are unchanged.",
+      "sources": ["description", "pkg/cmd/run/view/view.go#L295-L302", "pkg/cmd/run/view/view.go#L364-L369", "docs/event-listen-preview.md#L44"]
+    },
+    {
+      "id": "q5",
+      "type": "risk",
+      "origin": "pr",
+      "weight": 3,
+      "question": "What open review concern exists about the 'read the checks, listen again while any are pending' loop the hint prescribes?",
+      "answer": "`gh pr checks` also lists commit statuses, whose completion sends no check suite event, so an agent can wait indefinitely when only those remain pending. The thread is unresolved and the PR offers no fallback, such as `gh pr checks --watch`.",
+      "sources": ["threads", "pkg/cmd/event/shared/hint.go#L29-L38", "skills/gh/SKILL.md#L325"]
+    },
+    {
+      "id": "q6",
+      "type": "risk",
+      "origin": "pr",
+      "weight": 3,
+      "question": "How is a workflow run tied to the pull request named in the hint, and what open review concern is there about that?",
+      "answer": "Through the existing lookup that matches the run's head branch and repository to a pull request. Review flagged, still unresolved, that a reused branch whose earlier pull request was merged can produce a hint pointing at that old pull request.",
+      "sources": ["threads", "pkg/cmd/run/view/view.go#L364-L369", "pkg/cmd/run/watch/watch.go#L158-L167"]
+    },
+    {
+      "id": "q7",
+      "type": "tests",
+      "origin": "pr",
+      "weight": 2,
+      "question": "Which hint cases do this PR's tests cover, and which were left to a follow-up?",
+      "answer": "Covered: an agent gets the hint for an in-progress run in `gh run view` (summary and JSON) and in `gh run watch`; human callers get none, and neither does an agent viewing a completed run. Other hosts, a failed or missing pull request lookup, an agent watching a completed run, and shell completion of the new event type are not tested here; the author added them in follow-up PR #15083.",
+      "sources": ["threads", "pkg/cmd/run/view/view_test.go#L2860-L2957", "pkg/cmd/run/watch/watch_test.go#L420-L487", "pkg/cmd/event/shared/completion_test.go#L35-L39"]
+    },
+    {
+      "id": "q8",
+      "type": "impact",
+      "origin": "analysis",
+      "weight": 2,
+      "question": "What new work does `gh run view --json` do for an agent on an in-progress run, and what happens if that work fails?",
+      "answer": "It now looks up the run's pull request, an extra API request, before writing the JSON; before this PR the JSON path made no such lookup. A failed lookup is silently skipped, so the JSON and the exit status are unaffected.",
+      "sources": ["pkg/cmd/run/view/view.go#L295-L302", "base:pkg/cmd/run/view/view.go#L285-L287"]
+    },
+    {
+      "id": "q9",
+      "type": "decision",
+      "origin": "analysis",
+      "weight": 2,
+      "question": "Does the `gh` skill's guidance for waiting on CI match the hint's choice of a one-shot listener?",
+      "answer": "Not fully: the skill tells agents to use `--follow` or rerun the one-shot listener for the remaining suites, while the hint deliberately leaves `--follow` out because agents given it ran it in the background and were never resumed.",
+      "sources": ["skills/gh/SKILL.md#L321-L325", "docs/event-listen-preview.md#L42-L44", "description"]
+    },
+    {
+      "id": "q10",
+      "type": "impact",
+      "origin": "analysis",
+      "weight": 1,
+      "question": "Does an agent get the hint when it views or watches a run that has already finished while other checks on the same pull request are still running?",
+      "answer": "No. The hint depends only on the status of that one run, so a completed run gets no hint even if other check suites of the pull request are still pending.",
+      "sources": ["pkg/cmd/run/view/hint.go#L11-L14", "pkg/cmd/run/watch/watch.go#L150-L156", "description"]
+    }
+  ]
+}

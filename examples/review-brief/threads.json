@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/shipping/cache.ts",
+    "line": 47,
+    "startLine": null,
+    "side": "new",
+    "isResolved": false,
+    "isOutdated": false,
+    "startedByHuman": true,
+    "aiHint": false,
+    "comments": [
+      {
+        "author": "marina-costa",
+        "avatarUrl": "https://avatars.githubusercontent.com/u/1?s=48",
+        "body": "Five digits cover one neighborhood in São Paulo, but in the countryside they span different towns. Have we measured the shipping difference within the same prefix?",
+        "url": "https://github.com/acme/shop/pull/482#discussion_r1873001"
+      },
+      {
+        "author": "pedro-alves",
+        "avatarUrl": "https://avatars.githubusercontent.com/u/2?s=48",
+        "body": "I measured 30 days of quotes: within the same prefix, **97%** had the same price.\n\nI put the other 3% as a trade-off in the description. If that is too much, we can use 8 digits and accept fewer cache hits.",
+        "url": "https://github.com/acme/shop/pull/482#discussion_r1873044"
+      }
+    ]
+  },
+  {
+    "path": "src/shipping/cache.ts",
+    "line": 34,
+    "startLine": null,
+    "side": "new",
+    "isResolved": false,
+    "isOutdated": false,
+    "startedByHuman": false,
+    "aiHint": false,
+    "comments": [
+      {
+        "author": "coderabbitai[bot]",
+        "avatarUrl": null,
+        "body": "**[Possible simplification]** `this.entries.keys().next().value` can be extracted into a method.",
+        "url": "https://github.com/acme/shop/pull/482#discussion_r1872990"
+      }
+    ]
+  },
+  {
+    "path": "src/shipping/quote.ts",
+    "line": 21,
+    "startLine": null,
+    "side": "new",
+    "isResolved": true,
+    "isOutdated": false,
+    "startedByHuman": true,
+    "aiHint": false,
+    "comments": [
+      {
+        "author": "marina-costa",
+        "avatarUrl": "https://avatars.githubusercontent.com/u/1?s=48",
+        "body": "Doesn't this return the same reference that is in the cache?",
+        "url": "https://github.com/acme/shop/pull/482#discussion_r1872950"
+      },
+      {
+        "author": "pedro-alves",
+        "avatarUrl": "https://avatars.githubusercontent.com/u/2?s=48",
+        "body": "The spread creates a new object. Resolved.",
+        "url": "https://github.com/acme/shop/pull/482#discussion_r1872961"
+      }
+    ]
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "name": "review-brief",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A page that sums up a PR so the reviewer can check its direction without reading all the code (agent skill + CLI).",
+  "type": "module",
+  "bin": {
+    "review-brief": "bin/review-brief.mjs"
+  },
+  "engines": {
+    "node": ">=20.10"
+  },
+  "scripts": {
+    "test": "node scripts/run-tests.mjs",
+    "test:unit": "node scripts/run-tests.mjs unit"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "headSha": "581867e53f71eac2f3a10296717433746346e356",
+  "questions": [
+    {
+      "id": "q1",
+      "type": "impact",
+      "weight": 3,
+      "origin": "pr",
+      "question": "Where does the new shape of the shared button show on the site, and how much does the button change in size?",
+      "answer": "Everywhere that uses the button from the shared package: on the home page, the two buttons at the top (including the outline one, which sets no corners of its own and also becomes rounded) and the newsletter's 'Assinar' (subscribe); on /precos, each plan's 'Escolher' (choose); and the 'Enviar' (send) of the new /contato. The blog pages have no button. The corners go from 6px to fully rounded (pill), and the inner padding, uneven before (9px top, 7px bottom, 16px on the sides), becomes 10px top and bottom and 20px on the sides: the button gets about 4px taller (from 40px to 44px) and 8px wider.",
+      "sources": [
+        "description",
+        "packages/ui/src/Button.module.css#L1-L15",
+        "base:packages/ui/src/Button.module.css#L1-L10",
+        "apps/web/app/contato/page.tsx#L13"
+      ]
+    },
+    {
+      "id": "q2",
+      "type": "risk",
+      "weight": 3,
+      "origin": "analysis",
+      "question": "What happens when someone fills in the form on the /contato page and clicks 'Enviar' (send)?",
+      "answer": "Nothing is sent. 'Enviar' is the shared button, which is only a link, and it points to '#'; the form has no target and no submit handling. The page only gets '#' in the address, and what was typed goes nowhere. Even so, the page text promises a reply within one business day.",
+      "sources": [
+        "apps/web/app/contato/page.tsx#L7-L14"
+      ]
+    },
+    {
+      "id": "q3",
+      "type": "decision",
+      "weight": 2,
+      "origin": "analysis",
+      "question": "Where does the look of the contact form come from, and what does that tie it to in other parts of the site?",
+      "answer": "The page has no style of its own: it reuses the global class of the home page's newsletter (48px margin above, 4px between labels, fields and button, max width of 420px, same field style). Any change to that class changes the newsletter and the contact form together, and the contact form inherits the little room (4px) between the last field and the button. The message is a one-line field, not a text area.",
+      "sources": [
+        "apps/web/app/contato/page.tsx#L8-L13",
+        "apps/web/app/globals.css#L45-L46"
+      ]
+    },
+    {
+      "id": "q4",
+      "type": "tests",
+      "weight": 2,
+      "origin": "analysis",
+      "question": "Which automated tests come with or protect the changes of this PR?",
+      "answer": "None. The PR does not add, change or remove tests, and the app has no tests; nothing locks the new button size, the new link in the header, the contact page or the blog spacing. The planned check is visual: the PR exists to test the visual comparison skill (screenshots before and after).",
+      "sources": [
+        "description"
+      ]
+    },
+    {
+      "id": "q5",
+      "type": "what-changes",
+      "weight": 2,
+      "origin": "pr",
+      "question": "Besides the button and the new page, what other visual changes do the existing pages get?",
+      "answer": "Every route (home, pricing, blog, each post and the contact page itself) gets a fourth link, 'Contato' (contact), in the header, because it goes into the list of links that the root layout passes to the shared header. And only in the /blog list does the space between posts go from 24px to 32px, one step up the same spacing scale; the page of each post does not use that list and does not change beyond the header.",
+      "sources": [
+        "description",
+        "apps/web/app/layout.tsx#L6-L11",
+        "apps/web/app/layout.tsx#L17",
+        "apps/web/app/globals.css#L48",
+        "base:apps/web/app/globals.css#L48",
+        "apps/web/app/globals.css#L14-L15"
+      ]
+    }
+  ]
+}

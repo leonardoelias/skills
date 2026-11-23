@@ -1,0 +1,77 @@
+{
+  "headSha": "1aaf327317787de90ed2eb7bcae8a4604d99ef11",
+  "questions": [
+    {
+      "id": "q1",
+      "origin": "pr",
+      "type": "what-changes",
+      "weight": 3,
+      "question": "Under what condition does the shipping quote stop going to the carrier and reuse an earlier quote?",
+      "answer": "When the same process already quoted, less than 10 minutes ago, a postal code with the same first 5 digits and a cart in the same 500 g band of total weight (up to 500 g, 501 to 1000 g, and so on). Then it returns the price and delivery time of that quote without calling the carrier. The 10 minutes count from the write: reusing does not extend the expiry. Before, every quote called the carrier.",
+      "sources": ["src/shipping/quote.ts#L18-L30", "src/shipping/cache.ts#L1", "src/shipping/cache.ts#L16-L28", "src/shipping/cache.ts#L44-L48", "base:src/shipping/quote.ts#L15-L21", "description"]
+    },
+    {
+      "id": "q2",
+      "origin": "pr",
+      "type": "why",
+      "weight": 2,
+      "question": "What problem does the PR want to solve, and why do the quotes stay in the memory of each process instead of a shared cache?",
+      "answer": "The carrier accepts at most 20 quotes per second, and checkout went over that on Black Friday (#471); each quote takes about 800 ms. Process memory was chosen because each instance already gets traffic from the whole country, so sharing the cache gains little, and a shared Redis would put one more dependency in the checkout path. Accepted trade-off: each instance has its own cache, which starts empty, with up to 5000 entries (when full, it deletes the least recently used one).",
+      "sources": ["description", "src/shipping/cache.ts#L1-L2", "src/shipping/cache.ts#L30-L37", "src/shipping/cache.ts#L50"]
+    },
+    {
+      "id": "q3",
+      "origin": "pr",
+      "type": "contract",
+      "weight": 2,
+      "question": "What changes in the shape of the quote that the shipping function returns, and what does the checkout summary do with it?",
+      "answer": "The quote gets a required source field, which says whether it came from the cache or from the carrier; any code that builds a quote now has to set it. The cache keeps only the price in cents and the delivery days, and the source is added on each return, in a new object, not on the stored reference (a point raised and resolved in review). The checkout summary uses the source only for the label: \"Shipping (estimate)\" when it came from the cache, \"Shipping\" when it came from the carrier; price and delivery time stay as before.",
+      "sources": ["src/shipping/quote.ts#L5-L10", "src/shipping/quote.ts#L21", "src/shipping/quote.ts#L24-L30", "src/shipping/cache.ts#L50", "src/checkout/summary.ts#L5-L12", "base:src/shipping/quote.ts#L4-L7", "threads"]
+    },
+    {
+      "id": "q4",
+      "origin": "analysis",
+      "type": "impact",
+      "weight": 2,
+      "question": "What does a customer see in checkout who asks for the quote again with their own postal code and the same cart a few minutes later?",
+      "answer": "The same price and delivery time, but with the label \"Shipping (estimate)\": the label depends only on the quote coming from the cache, not on it being made for another postal code. The same happens when switching to a postal code with the same prefix or changing the cart without leaving the 500 g band. It only quotes the carrier again, with the label \"Shipping\", 10 minutes after the first quote, on another instance, or when the prefix or the band changes.",
+      "sources": ["src/checkout/summary.ts#L8", "src/shipping/quote.ts#L19-L21", "src/shipping/cache.ts#L16-L28", "src/shipping/cache.ts#L44-L48", "description"]
+    },
+    {
+      "id": "q5",
+      "origin": "pr",
+      "type": "risk",
+      "weight": 3,
+      "question": "In which cases does the customer see a shipping price different from the one that would be quoted for their postal code, for how long, and what objection about this is still open in review?",
+      "answer": "When the reused quote was made for another postal code with the same 5-digit prefix and the price differs. The author measured 30 days and found equal prices in 97% of cases within the prefix; in the other 3% the customer sees a neighbor's shipping price for up to 10 minutes, and the carrier charges the real price on the label. A change in the carrier's price table also does not clear the cache (left for the next PR), so an old price can show for up to 10 minutes. The objection that in the countryside 5 digits span different towns is still open; the author answered with the overall 97% figure and offered to use all 8 digits, with fewer cache hits.",
+      "sources": ["description", "threads", "src/shipping/cache.ts#L44-L48"]
+    },
+    {
+      "id": "q6",
+      "origin": "analysis",
+      "type": "decision",
+      "weight": 3,
+      "question": "What assumption about the carrier's price justifies grouping carts in 500 g bands, and what does the quotes file that the PR adds show about it?",
+      "answer": "The code assumes that the carrier charges the same price within each 500 g band; the description neither mentions nor measures this assumption (the 97% is only about the postal code prefix). In the added quotes file, price and delivery time change every 25 g within the same prefix and the same band: in prefix 01000, 250 g costs R$ 12.00 in 2 days and 425 g costs R$ 14.59 in 4 days. No test or code reads that file, and the reuse test treats 300 g and 450 g as the same quote.",
+      "sources": ["src/shipping/cache.ts#L44-L48", "src/shipping/__fixtures__/quotes.json#L2-L9", "src/shipping/quote.test.ts#L22-L29", "description"]
+    },
+    {
+      "id": "q7",
+      "origin": "analysis",
+      "type": "risk",
+      "weight": 3,
+      "question": "After the PR, what can still make checkout go over the carrier's limit of quotes per second?",
+      "answer": "The PR does not limit the calls; it only avoids repeating the ones already in the cache. These still go to the carrier: every new combination of prefix and band, everything that reaches a newly started instance (the cache of each one starts empty), and simultaneous requests for the same combination while the first quote (about 800 ms) has not come back, because the cache is only written after the response. If the carrier fails, nothing is stored and the next request tries again.",
+      "sources": ["src/shipping/quote.ts#L19-L28", "src/shipping/cache.ts#L50", "description"]
+    },
+    {
+      "id": "q8",
+      "origin": "analysis",
+      "type": "tests",
+      "weight": 2,
+      "question": "What guarantee went away with the removed test, and what do the new tests leave unchecked?",
+      "answer": "The test that required a call to the carrier for every quote, even a repeated one, is gone. In its place, one test requires a single call for the same prefix and band (300 g and 450 g) and another requires a new call in another band (300 g and 700 g); the cache has tests for expiry at the end of its time to live, for dropping the least recently used entry, and for the key (500 g in band 1, 501 g in band 2). Left without a test: the \"Shipping (estimate)\" label in checkout, expiry and a postal code from another prefix going through the quote, the fact that reusing does not extend the expiry, and the quotes file, which no test uses.",
+      "sources": ["base:src/shipping/quote.test.ts#L16-L21", "src/shipping/quote.test.ts#L22-L36", "src/shipping/cache.test.ts#L4-L31", "src/checkout/summary.ts#L8"]
+    }
+  ]
+}

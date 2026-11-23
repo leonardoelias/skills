@@ -1,0 +1,29 @@
+{
+  "prs": [
+    {
+      "id": "example",
+      "fixture": "examples/review-brief",
+      "headSha": "1aaf327317787de90ed2eb7bcae8a4604d99ef11",
+      "about": "Fictional PR in TypeScript: a cache of shipping quotes. It has decisions, an open thread, a flow that changes and a removed test."
+    },
+    {
+      "id": "cli-15081",
+      "pr": "https://github.com/cli/cli/pull/15081",
+      "headSha": "8a46b4ed8669cf886f27656ecc32210159c880cb",
+      "about": "Real PR in Go, merged: check suite events in the event streaming, suggested by gh run view and gh run watch. 282 lines in 11 files."
+    },
+    {
+      "id": "cli-15083",
+      "pr": "https://github.com/cli/cli/pull/15083",
+      "headSha": "e22082cd29589d158d468c92748b2c4bcb5787b2",
+      "about": "Real PR in Go, merged: review fixes spread across a stack of PRs. 469 lines in 17 files, many tests."
+    },
+    {
+      "id": "sandbox-1",
+      "pr": "https://github.com/leonardoelias/skills-sandbox/pull/1",
+      "headSha": "581867e53f71eac2f3a10296717433746346e356",
+      "private": true,
+      "about": "Small interface PR (CSS and TSX), closed: pill button, contact page and blog spacing. Measures the brief of a PR smaller than the minimum budget."
+    }
+  ]
+}

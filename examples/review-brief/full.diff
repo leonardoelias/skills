@@ -1,0 +1,263 @@
+diff --git a/src/checkout/summary.ts b/src/checkout/summary.ts
+index ce48bf5..9d61f3d 100644
+--- a/src/checkout/summary.ts
++++ b/src/checkout/summary.ts
+@@ -5,7 +5,7 @@ import type { Item } from '../cart/types'
+ export async function shippingLine(postalCode: string, items: Item[]) {
+   const quote = await quoteShipping(postalCode, items)
+   return {
+-    label: 'Shipping',
++    label: quote.source === 'cache' ? 'Shipping (estimate)' : 'Shipping',
+     price: formatBRL(quote.priceInCents),
+     detail: `${quote.deliveryDays} business days`,
+   }
+diff --git a/src/shipping/__fixtures__/quotes.json b/src/shipping/__fixtures__/quotes.json
+new file mode 100644
+index 0000000..ee086f1
+--- /dev/null
++++ b/src/shipping/__fixtures__/quotes.json
+@@ -0,0 +1,72 @@
++[
++  {"postalCode":"01000000","weightInGrams":250,"price":12,"days":2},
++  {"postalCode":"01000137","weightInGrams":275,"price":12.37,"days":3},
++  {"postalCode":"01000274","weightInGrams":300,"price":12.74,"days":4},
++  {"postalCode":"01000411","weightInGrams":325,"price":13.11,"days":5},
++  {"postalCode":"01000548","weightInGrams":350,"price":13.48,"days":6},
++  {"postalCode":"01000685","weightInGrams":375,"price":13.85,"days":2},
++  {"postalCode":"01000822","weightInGrams":400,"price":14.22,"days":3},
++  {"postalCode":"01000959","weightInGrams":425,"price":14.59,"days":4},
++  {"postalCode":"01001096","weightInGrams":450,"price":14.96,"days":5},
++  {"postalCode":"01001233","weightInGrams":475,"price":15.33,"days":6},
++  {"postalCode":"01001370","weightInGrams":500,"price":15.7,"days":2},
++  {"postalCode":"01001507","weightInGrams":525,"price":16.07,"days":3},
++  {"postalCode":"01001644","weightInGrams":550,"price":16.44,"days":4},
++  {"postalCode":"01001781","weightInGrams":575,"price":16.81,"days":5},
++  {"postalCode":"01001918","weightInGrams":600,"price":17.18,"days":6},
++  {"postalCode":"01002055","weightInGrams":625,"price":17.55,"days":2},
++  {"postalCode":"01002192","weightInGrams":650,"price":17.92,"days":3},
++  {"postalCode":"01002329","weightInGrams":675,"price":18.29,"days":4},
++  {"postalCode":"01002466","weightInGrams":700,"price":18.66,"days":5},
++  {"postalCode":"01002603","weightInGrams":725,"price":19.03,"days":6},
++  {"postalCode":"01002740","weightInGrams":750,"price":19.4,"days":2},
++  {"postalCode":"01002877","weightInGrams":775,"price":19.77,"days":3},
++  {"postalCode":"01003014","weightInGrams":800,"price":20.14,"days":4},
++  {"postalCode":"01003151","weightInGrams":825,"price":20.51,"days":5},
++  {"postalCode":"01003288","weightInGrams":850,"price":20.88,"days":6},
++  {"postalCode":"01003425","weightInGrams":875,"price":21.25,"days":2},
++  {"postalCode":"01003562","weightInGrams":900,"price":21.62,"days":3},
++  {"postalCode":"01003699","weightInGrams":925,"price":21.99,"days":4},
++  {"postalCode":"01003836","weightInGrams":950,"price":22.36,"days":5},
++  {"postalCode":"01003973","weightInGrams":975,"price":22.73,"days":6},
++  {"postalCode":"01004110","weightInGrams":1000,"price":23.1,"days":2},
++  {"postalCode":"01004247","weightInGrams":1025,"price":23.47,"days":3},
++  {"postalCode":"01004384","weightInGrams":1050,"price":23.84,"days":4},
++  {"postalCode":"01004521","weightInGrams":1075,"price":24.21,"days":5},
++  {"postalCode":"01004658","weightInGrams":1100,"price":24.58,"days":6},
++  {"postalCode":"01004795","weightInGrams":1125,"price":24.95,"days":2},
++  {"postalCode":"01004932","weightInGrams":1150,"price":25.32,"days":3},
++  {"postalCode":"01005069","weightInGrams":1175,"price":25.69,"days":4},
++  {"postalCode":"01005206","weightInGrams":1200,"price":26.06,"days":5},
++  {"postalCode":"01005343","weightInGrams":1225,"price":26.43,"days":6},
++  {"postalCode":"01005480","weightInGrams":1250,"price":26.8,"days":2},
++  {"postalCode":"01005617","weightInGrams":1275,"price":27.17,"days":3},
++  {"postalCode":"01005754","weightInGrams":1300,"price":27.54,"days":4},
++  {"postalCode":"01005891","weightInGrams":1325,"price":27.91,"days":5},
++  {"postalCode":"01006028","weightInGrams":1350,"price":28.28,"days":6},
++  {"postalCode":"01006165","weightInGrams":1375,"price":28.65,"days":2},
++  {"postalCode":"01006302","weightInGrams":1400,"price":29.02,"days":3},
++  {"postalCode":"01006439","weightInGrams":1425,"price":29.39,"days":4},
++  {"postalCode":"01006576","weightInGrams":1450,"price":29.76,"days":5},
++  {"postalCode":"01006713","weightInGrams":1475,"price":30.13,"days":6},
++  {"postalCode":"01006850","weightInGrams":1500,"price":30.5,"days":2},
++  {"postalCode":"01006987","weightInGrams":1525,"price":30.87,"days":3},
++  {"postalCode":"01007124","weightInGrams":1550,"price":31.24,"days":4},
++  {"postalCode":"01007261","weightInGrams":1575,"price":31.61,"days":5},
++  {"postalCode":"01007398","weightInGrams":1600,"price":31.98,"days":6},
++  {"postalCode":"01007535","weightInGrams":1625,"price":32.35,"days":2},
++  {"postalCode":"01007672","weightInGrams":1650,"price":32.72,"days":3},
++  {"postalCode":"01007809","weightInGrams":1675,"price":33.09,"days":4},
++  {"postalCode":"01007946","weightInGrams":1700,"price":33.46,"days":5},
++  {"postalCode":"01008083","weightInGrams":1725,"price":33.83,"days":6},
++  {"postalCode":"01008220","weightInGrams":1750,"price":34.2,"days":2},
++  {"postalCode":"01008357","weightInGrams":1775,"price":34.57,"days":3},
++  {"postalCode":"01008494","weightInGrams":1800,"price":34.94,"days":4},
++  {"postalCode":"01008631","weightInGrams":1825,"price":35.31,"days":5},
++  {"postalCode":"01008768","weightInGrams":1850,"price":35.68,"days":6},
++  {"postalCode":"01008905","weightInGrams":1875,"price":36.05,"days":2},
++  {"postalCode":"01009042","weightInGrams":1900,"price":36.42,"days":3},
++  {"postalCode":"01009179","weightInGrams":1925,"price":36.79,"days":4},
++  {"postalCode":"01009316","weightInGrams":1950,"price":37.16,"days":5},
++  {"postalCode":"01009453","weightInGrams":1975,"price":37.53,"days":6}
++]
+diff --git a/src/shipping/cache.test.ts b/src/shipping/cache.test.ts
+new file mode 100644
+index 0000000..e13b8bb
+--- /dev/null
++++ b/src/shipping/cache.test.ts
+@@ -0,0 +1,31 @@
++import { describe, expect, it } from 'vitest'
++import { ExpiringCache, shippingKey } from './cache'
++
++describe('ExpiringCache', () => {
++  it('forgets the entry after it expires', () => {
++    let now = 0
++    const cache = new ExpiringCache<number>(1000, 10, () => now)
++    cache.write('a', 1)
++    now = 1000
++    expect(cache.read('a')).toBeUndefined()
++  })
++
++  it('deletes the least recently used entry when full', () => {
++    const cache = new ExpiringCache<number>(1000, 2, () => 0)
++    cache.write('a', 1)
++    cache.write('b', 2)
++    cache.read('a')
++    cache.write('c', 3)
++    expect(cache.read('a')).toBe(1)
++    expect(cache.read('b')).toBeUndefined()
++  })
++})
++
++describe('shippingKey', () => {
++  it.each([
++    ['01310100', 500, '01310:1'],
++    ['01310999', 501, '01310:2'],
++  ])('postal code %s with %i g becomes %s', (postalCode, weight, key) => {
++    expect(shippingKey(postalCode, weight)).toBe(key)
++  })
++})
+diff --git a/src/shipping/cache.ts b/src/shipping/cache.ts
+new file mode 100644
+index 0000000..f47d858
+--- /dev/null
++++ b/src/shipping/cache.ts
+@@ -0,0 +1,50 @@
++const TEN_MINUTES = 10 * 60 * 1000
++const MAX_ENTRIES = 5000
++
++type Entry<T> = { value: T; expiresAt: number }
++
++/** Keeps quotes for a short time. When full, it deletes the least recently used entry. */
++export class ExpiringCache<T> {
++  private entries = new Map<string, Entry<T>>()
++
++  constructor(
++    private ttlMs = TEN_MINUTES,
++    private max = MAX_ENTRIES,
++    private now = () => Date.now(),
++  ) {}
++
++  read(key: string): T | undefined {
++    const entry = this.entries.get(key)
++    if (!entry) return undefined
++    if (entry.expiresAt <= this.now()) {
++      this.entries.delete(key)
++      return undefined
++    }
++
++    // Reinsert so the Map keeps the order of use: the first key is the least recently used.
++    this.entries.delete(key)
++    this.entries.set(key, entry)
++    return entry.value
++  }
++
++  write(key: string, value: T): void {
++    this.entries.delete(key)
++    this.entries.set(key, { value, expiresAt: this.now() + this.ttlMs })
++    if (this.entries.size > this.max) {
++      const oldest = this.entries.keys().next().value
++      if (oldest !== undefined) this.entries.delete(oldest)
++    }
++  }
++
++  clear(): void {
++    this.entries.clear()
++  }
++}
++
++/** 500 g bands: the carrier charges the same price within each band. */
++export function shippingKey(postalCode: string, weightInGrams: number): string {
++  const band = Math.ceil(weightInGrams / 500)
++  return `${postalCode.slice(0, 5)}:${band}`
++}
++
++export const shippingCache = new ExpiringCache<{ priceInCents: number; deliveryDays: number }>()
+diff --git a/src/shipping/quote.test.ts b/src/shipping/quote.test.ts
+index a7be9df..c384857 100644
+--- a/src/shipping/quote.test.ts
++++ b/src/shipping/quote.test.ts
+@@ -1,8 +1,14 @@
+-import { describe, expect, it, vi } from 'vitest'
++import { beforeEach, describe, expect, it, vi } from 'vitest'
++import { shippingCache } from './cache'
+ import { quoteShipping } from './quote'
+ import * as carrier from './carrier'
+ 
+ describe('quoteShipping', () => {
++  beforeEach(() => {
++    shippingCache.clear()
++    vi.restoreAllMocks()
++  })
++
+   it('rejects a postal code with fewer than 8 digits', async () => {
+     await expect(quoteShipping('0131', [])).rejects.toThrow('Invalid postal code')
+   })
+@@ -13,10 +19,19 @@ describe('quoteShipping', () => {
+     expect(spy).toHaveBeenCalledWith({ postalCode: '01310100', weightInGrams: 500 })
+   })
+ 
+-  it('calls the carrier for every quote', async () => {
++  it('reuses the quote for the same postal code prefix and weight band', async () => {
++    const spy = vi.spyOn(carrier, 'quoteFromCarrier').mockResolvedValue({ price: 10, days: 3 })
++    const first = await quoteShipping('01310-100', [{ weightInGrams: 300, quantity: 1 }])
++    const second = await quoteShipping('01310-999', [{ weightInGrams: 450, quantity: 1 }])
++    expect(spy).toHaveBeenCalledTimes(1)
++    expect(first.source).toBe('carrier')
++    expect(second.source).toBe('cache')
++  })
++
++  it('quotes the carrier again for another weight band', async () => {
+     const spy = vi.spyOn(carrier, 'quoteFromCarrier').mockResolvedValue({ price: 10, days: 3 })
+-    await quoteShipping('01310-100', [])
+-    await quoteShipping('01310-100', [])
++    await quoteShipping('01310-100', [{ weightInGrams: 300, quantity: 1 }])
++    await quoteShipping('01310-100', [{ weightInGrams: 700, quantity: 1 }])
+     expect(spy).toHaveBeenCalledTimes(2)
+   })
+ })
+diff --git a/src/shipping/quote.ts b/src/shipping/quote.ts
+index d609652..dfd4981 100644
+--- a/src/shipping/quote.ts
++++ b/src/shipping/quote.ts
+@@ -1,9 +1,12 @@
+ import { quoteFromCarrier } from './carrier'
++import { shippingCache, shippingKey } from './cache'
+ import type { Item } from '../cart/types'
+ 
+ export type Quote = {
+   priceInCents: number
+   deliveryDays: number
++  // "cache" when the price came from a quote made less than 10 minutes ago.
++  source: 'cache' | 'carrier'
+ }
+ 
+ export async function quoteShipping(postalCode: string, items: Item[]): Promise<Quote> {
+@@ -13,10 +16,16 @@ export async function quoteShipping(postalCode: string, items: Item[]): Promise<Quote> {
+   }
+ 
+   const weightInGrams = items.reduce((total, item) => total + item.weightInGrams * item.quantity, 0)
+-  const response = await quoteFromCarrier({ postalCode: digits, weightInGrams })
++  const key = shippingKey(digits, weightInGrams)
++  const cached = shippingCache.read(key)
++  if (cached) return { ...cached, source: 'cache' }
+ 
+-  return {
++  const response = await quoteFromCarrier({ postalCode: digits, weightInGrams })
++  const quote = {
+     priceInCents: Math.round(response.price * 100),
+     deliveryDays: response.days,
+   }
++  shippingCache.write(key, quote)
++
++  return { ...quote, source: 'carrier' }
+ }

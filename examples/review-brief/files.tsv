@@ -1,0 +1,6 @@
+1	1	modified	src/checkout/summary.ts
+72	0	added	src/shipping/__fixtures__/quotes.json
+31	0	added	src/shipping/cache.test.ts
+50	0	added	src/shipping/cache.ts
+19	4	modified	src/shipping/quote.test.ts
+11	2	modified	src/shipping/quote.ts
