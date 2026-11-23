@@ -1,0 +1,65 @@
+# Tests for the skills. visual-diff: unit, detection, diff, publishing with a local remote, and
+# integration with Chromium over examples/sample-site. merge-gauge: frontmatter only.
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  visual-diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+    defaults:
+      run:
+        working-directory: skills/visual-diff
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: skills/visual-diff/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Tests
+        env:
+          GIT_AUTHOR_NAME: ci
+          GIT_AUTHOR_EMAIL: ci@example.com
+          GIT_COMMITTER_NAME: ci
+          GIT_COMMITTER_EMAIL: ci@example.com
+        run: npm test
+      - name: Schema is up to date
+        run: npm run schema && git diff --exit-code visual-diff.schema.json
+      # The integration tests leave throwaway repositories in /tmp/vd-test-*. When something fails,
+      # keep their reports and images to see what Linux Chromium produced.
+      - name: Test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff-tests-node${{ matrix.node }}
+          path: /tmp/vd-test-*/.visual-diff/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # Every SKILL.md starts with frontmatter whose name matches its folder and has a description.
+  skills:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Frontmatter
+        run: |
+          status=0
+          for f in skills/*/SKILL.md; do
+            dir=$(basename "$(dirname "$f")")
+            [[ "$(sed -n 1p "$f")" == "---" ]] || { echo "::error file=$f::missing frontmatter"; status=1; }
+            [[ "$(sed -n 2p "$f")" == "name: $dir" ]] || { echo "::error file=$f::line 2 must be 'name: $dir'"; status=1; }
+            grep -q '^description: ' "$f" || { echo "::error file=$f::missing description"; status=1; }
+          done
+          exit $status

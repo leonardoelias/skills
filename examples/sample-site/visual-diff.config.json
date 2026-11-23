@@ -1,0 +1,9 @@
+{
+  "startCommand": "static:.",
+  "routes": [
+    { "path": "/", "files": ["index.html"] },
+    { "path": "/about.html", "files": ["about.html"] }
+  ],
+  "globalFiles": ["styles.css"],
+  "themes": [{ "name": "light" }, { "name": "dark", "colorScheme": "dark" }]
+}

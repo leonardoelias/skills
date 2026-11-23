@@ -1,0 +1,100 @@
+# Copy to .github/workflows/visual-diff.yml in the app repository.
+# Assumes the skill is committed in the app (./install.sh --project <app>), in .claude/skills/visual-diff,
+# so CI doesn't need access to the skill repository.
+name: visual-diff
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: write # push the screenshots to this repository's visual-diff-assets branch
+  pull-requests: write # create / update the sticky comment
+
+concurrency:
+  group: visual-diff-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  visual-diff:
+    # Fork PRs get a read-only token; skip them instead of using pull_request_target, which would run
+    # untrusted code with a write token.
+    if: github.event.pull_request.head.repo.full_name == github.repository && !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SKILL: .claude/skills/visual-diff
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      # The app's package manager comes from the lockfile. The skill always installs with npm.
+      - name: Detect the package manager
+        id: pm
+        run: |
+          if [ -f pnpm-lock.yaml ]; then echo "name=pnpm" >> "$GITHUB_OUTPUT"; echo "install=pnpm install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+          elif [ -f yarn.lock ]; then echo "name=yarn" >> "$GITHUB_OUTPUT"; echo "install=yarn install --immutable" >> "$GITHUB_OUTPUT"
+          elif [ -f bun.lock ] || [ -f bun.lockb ]; then echo "name=bun" >> "$GITHUB_OUTPUT"; echo "install=bun install --frozen-lockfile" >> "$GITHUB_OUTPUT"
+          else echo "name=npm" >> "$GITHUB_OUTPUT"; echo "install=npm ci" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: ${{ steps.pm.outputs.name != 'bun' && steps.pm.outputs.name || '' }}
+
+      - name: Enable pnpm / yarn through Corepack
+        if: steps.pm.outputs.name == 'pnpm' || steps.pm.outputs.name == 'yarn'
+        run: corepack enable
+
+      - uses: oven-sh/setup-bun@v2
+        if: steps.pm.outputs.name == 'bun'
+
+      - name: App dependencies
+        run: ${{ steps.pm.outputs.install }}
+
+      # Cache Playwright's Chromium, keyed by the version pinned in the skill's package-lock.
+      - name: Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('./$SKILL/package-lock.json').packages['node_modules/playwright'].version")" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ env.SKILL }}/node_modules
+          key: visual-diff-deps-${{ runner.os }}-${{ hashFiles(format('{0}/package-lock.json', env.SKILL)) }}
+
+      - name: Install visual-diff and Chromium
+        run: |
+          [ -d "$SKILL/node_modules/playwright" ] || npm --prefix "$SKILL" ci --no-audit --no-fund
+          npx --prefix "$SKILL" playwright install --with-deps chromium
+
+      - name: Capture and compare
+        run: >
+          node "$SKILL/bin/visual-diff.mjs" run
+          --base "origin/${{ github.base_ref }}"
+          --head "${{ github.event.pull_request.head.sha }}"
+        # Protected previews instead of local worktrees:
+        #   --base-url https://app-git-main-acme.vercel.app --head-url ${{ steps.preview.outputs.url }}
+        # env:
+        #   VERCEL_AUTOMATION_BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+
+      # In CI the automatic summary (summary.auto.md) is used. The comment belongs to github-actions[bot];
+      # whoever runs the skill locally later creates their own comment instead of editing the bot's.
+      - name: Publish the sticky comment
+        run: node "$SKILL/bin/visual-diff.mjs" publish --pr ${{ github.event.pull_request.number }} --verify
+
+      - name: Keep the full report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diff-report
+          path: .visual-diff
+          include-hidden-files: true
+          retention-days: 14
